@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -11,7 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "array_view2d.h"
+#include <Eigen/Dense>
+
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
@@ -100,7 +100,8 @@ class Case {
       : data_(load_data(path)),
         mesh_(data_.q1_edges, data_.q2_edges),
         bc_values_(mesh_.n1() + 1),
-        f_(mesh_.n1() * mesh_.n2()) {
+        f_(static_cast<Eigen::Index>(mesh_.n1()),
+           static_cast<Eigen::Index>(mesh_.n2())) {
     for (std::size_t i = 0; i <= mesh_.n1(); ++i) {
       bc_values_[i] = initial_value(mesh_.q1_edge(i), mesh_.q2_edge(0));
     }
@@ -110,15 +111,27 @@ class Case {
     bc_.set_dirichlet(sayram2d::Side::Q2Min, bc_values_);
     bc_.set_dirichlet(sayram2d::Side::Q2Max, 0.0);
 
-    equation_ = std::make_unique<sayram2d::Equation>(
-        sayram2d::make_view2d(data_.G, mesh_.n1(), mesh_.n2()),
-        sayram2d::make_view2d(data_.D11, mesh_.n1(), mesh_.n2()),
-        sayram2d::make_view2d(data_.D12, mesh_.n1(), mesh_.n2()),
-        sayram2d::make_view2d(data_.D22, mesh_.n1(), mesh_.n2()), bc_);
+    auto to_eigen = [&](const std::vector<double>& values) {
+      Eigen::MatrixXd matrix(static_cast<Eigen::Index>(mesh_.n1()),
+                             static_cast<Eigen::Index>(mesh_.n2()));
+      for (std::size_t i = 0; i < mesh_.n1(); ++i) {
+        for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+          matrix(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
+              values[i * mesh_.n2() + j];
+        }
+      }
+      return matrix;
+    };
+    G_ = to_eigen(data_.G);
+    D11_ = to_eigen(data_.D11);
+    D12_ = to_eigen(data_.D12);
+    D22_ = to_eigen(data_.D22);
+
+    equation_ = std::make_unique<sayram2d::Equation>(G_, D11_, D12_, D22_, bc_);
 
     for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       for (std::size_t j = 0; j < mesh_.n2(); ++j) {
-        f_[i * mesh_.n2() + j] =
+        f_(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
             initial_value(mesh_.q1_center(i), mesh_.q2_center(j));
       }
     }
@@ -129,14 +142,8 @@ class Case {
   const sayram2d::Equation& equation() const noexcept { return *equation_; }
   const Data& data() const noexcept { return data_; }
 
-  std::vector<double>& f() noexcept { return f_; }
-  const std::vector<double>& f() const noexcept { return f_; }
-  sayram2d::ArrayView2D<double> f_view() {
-    return sayram2d::make_view2d(f_, mesh_.n1(), mesh_.n2());
-  }
-  sayram2d::ArrayView2D<const double> f_const_view() const {
-    return sayram2d::make_view2d(f_, mesh_.n1(), mesh_.n2());
-  }
+  Eigen::MatrixXd& f() noexcept { return f_; }
+  const Eigen::MatrixXd& f() const noexcept { return f_; }
 
  private:
   Data data_;
@@ -144,7 +151,11 @@ class Case {
   std::vector<double> bc_values_;
   sayram2d::BoundaryConditions bc_;
   std::unique_ptr<sayram2d::Equation> equation_;
-  std::vector<double> f_;
+  Eigen::MatrixXd G_;
+  Eigen::MatrixXd D11_;
+  Eigen::MatrixXd D12_;
+  Eigen::MatrixXd D22_;
+  Eigen::MatrixXd f_;
 };
 
 }  // namespace albert_young

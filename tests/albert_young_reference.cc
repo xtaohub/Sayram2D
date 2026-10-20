@@ -1,14 +1,16 @@
 // Run the real Albert-Young case on the preprocessed diffusion data.
 // Usage: albert_young_reference <converted.bin> <output.csv>
 
-#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <Eigen/Dense>
 
 #include "albert_young_case.h"
 #include "solver.h"
@@ -26,11 +28,14 @@ int main(int argc, char** argv) {
   const double dt = 0.002;
   const int steps = 10;
 
-  const std::vector<double> f0 = data.f();
+  const Eigen::MatrixXd f0 = data.f();
+  Eigen::MatrixXd f_in = f0;
+  Eigen::MatrixXd f_out(n1, n2);
   for (int step = 0; step < steps; ++step) {
-    solver.solve(data.equation(), data.f_const_view(), data.f_view(), dt);
+    solver.solve(data.equation(), f_in, f_out, dt);
+    std::swap(f_in, f_out);
   }
-  const std::vector<double>& f10 = data.f();
+  const Eigen::MatrixXd& f10 = f_in;
 
   std::ofstream out(argv[2]);
   if (!out) throw std::runtime_error("cannot write output CSV");
@@ -38,16 +43,19 @@ int main(int argc, char** argv) {
   out << "# source=redesigned Albert_Young case, 80x80, 10 steps, dt=0.002 days\n";
   out << "# n1=" << n1 << "\n# n2=" << n2 << "\n# steps=" << steps
       << "\n# dt=" << dt << "\n";
-  out << "# min0=" << *std::min_element(f0.begin(), f0.end()) << "\n";
-  out << "# min10=" << *std::min_element(f10.begin(), f10.end()) << "\n";
+  out << "# min0=" << f0.minCoeff() << "\n";
+  out << "# min10=" << f10.minCoeff() << "\n";
   out << "i,j,f0,f10\n";
   for (std::size_t i = 0; i < n1; ++i) {
     for (std::size_t j = 0; j < n2; ++j) {
-      const std::size_t k = i * n2 + j;
-      out << i << "," << j << "," << f0[k] << "," << f10[k] << "\n";
+      out << i << "," << j << "," << f0(static_cast<Eigen::Index>(i),
+                                        static_cast<Eigen::Index>(j))
+          << "," << f10(static_cast<Eigen::Index>(i),
+                         static_cast<Eigen::Index>(j))
+          << "\n";
     }
   }
-  std::cout << "min0=" << *std::min_element(f0.begin(), f0.end())
-            << " min10=" << *std::min_element(f10.begin(), f10.end()) << "\n";
+  std::cout << "min0=" << f0.minCoeff() << " min10=" << f10.minCoeff()
+            << "\n";
   return 0;
 }

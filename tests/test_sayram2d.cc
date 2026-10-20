@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include "reference_case.h"
 #include "array_view2d.h"
 #include "boundary_conditions.h"
@@ -50,6 +52,12 @@ double max_abs_diff(const std::vector<double>& a,
     result = std::max(result, std::abs(a[k] - b[k]));
   }
   return result;
+}
+
+double max_abs_diff(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b) {
+  check(a.rows() == b.rows() && a.cols() == b.cols(),
+        "max_abs_diff: Eigen size mismatch");
+  return (a - b).cwiseAbs().maxCoeff();
 }
 
 void test_mesh_geometry() {
@@ -481,6 +489,124 @@ void test_boundary_reference_semantics() {
                 "Equation must reject temporary BoundaryConditions");
 }
 
+
+void test_eigen_support() {
+  Mesh mesh({0.0, 0.4, 1.0, 1.5}, {0.0, 0.5, 1.2});
+  const std::size_t n1 = mesh.n1();
+  const std::size_t n2 = mesh.n2();
+
+  Eigen::MatrixXd G(n1, n2);
+  Eigen::MatrixXd D11(n1, n2);
+  Eigen::MatrixXd D12(n1, n2);
+  Eigen::MatrixXd D22(n1, n2);
+  Eigen::MatrixXd inv_tau(n1, n2);
+  for (std::size_t i = 0; i < n1; ++i) {
+    for (std::size_t j = 0; j < n2; ++j) {
+      const auto ii = static_cast<Eigen::Index>(i);
+      const auto jj = static_cast<Eigen::Index>(j);
+      G(ii, jj) = 1.0 + 0.1 * mesh.q1_center(i);
+      D11(ii, jj) = 1.0 + 0.2 * mesh.q2_center(j);
+      D12(ii, jj) = 0.05;
+      D22(ii, jj) = 0.8 + 0.1 * mesh.q1_center(i);
+      inv_tau(ii, jj) = 0.02;
+    }
+  }
+
+  BoundaryConditions bc;
+  bc.set_dirichlet(Side::Q1Min, 0.0);
+  bc.set_zero_flux(Side::Q1Max);
+  bc.set_zero_flux(Side::Q2Min);
+  bc.set_zero_flux(Side::Q2Max);
+
+  // Direct Eigen coefficients, including the optional inverse-loss matrix.
+  Equation eigen_equation(G, D11, D12, D22, inv_tau, bc);
+  check(eigen_equation.has_loss() && !eigen_equation.loss_is_constant(),
+        "Eigen inverse-loss matrix");
+  check(eigen_equation.G_view().data() == G.data(),
+        "Eigen coefficient view must be zero-copy");
+  check(eigen_equation.G_view().extent1() == n1 &&
+            eigen_equation.G_view().extent2() == n2,
+        "Eigen coefficient extents");
+  check(eigen_equation.G_view().stride1() == 1 &&
+            eigen_equation.G_view().stride2() ==
+                static_cast<std::ptrdiff_t>(n1),
+        "Eigen column-major strides");
+
+  const Eigen::MatrixXd G_const = G;
+  Equation const_equation(G_const, D11, D12, D22, bc);
+  check(const_equation.G_view().data() == G_const.data(),
+        "const Eigen coefficient matrices are supported");
+  Equation setter_equation(G, D11, D12, D22, bc);
+  setter_equation.set_loss(inv_tau);
+  check(!setter_equation.loss_is_constant(),
+        "set_loss accepts an Eigen matrix directly");
+
+  // Same data through the existing explicit view interface.
+  ArrayView2D<const double> Gv(G.data(), n1, n2, 1, n1);
+  ArrayView2D<const double> D11v(D11.data(), n1, n2, 1, n1);
+  ArrayView2D<const double> D12v(D12.data(), n1, n2, 1, n1);
+  ArrayView2D<const double> D22v(D22.data(), n1, n2, 1, n1);
+  ArrayView2D<const double> tau_v(inv_tau.data(), n1, n2, 1, n1);
+  Equation view_equation(Gv, D11v, D12v, D22v, bc);
+  view_equation.set_loss(tau_v);
+
+  Eigen::MatrixXd f0(n1, n2);
+  for (std::size_t i = 0; i < n1; ++i) {
+    for (std::size_t j = 0; j < n2; ++j) {
+      f0(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
+          1.0 + 0.1 * static_cast<double>(i + j);
+    }
+  }
+
+  Solver solver(mesh);
+  Eigen::MatrixXd eigen_out(n1, n2);
+  Eigen::MatrixXd view_out(n1, n2);
+  solver.solve(eigen_equation, f0, eigen_out, 0.01);
+  solver.solve(view_equation, make_view2d(f0.data(), n1, n2, 1, n1),
+               make_view2d(view_out.data(), n1, n2, 1, n1), 0.01);
+  check(max_abs_diff(eigen_out, view_out) < 1e-14,
+        "Eigen and view solves must agree");
+
+  // In-place solve using the same Eigen matrix as input and output.
+  Eigen::MatrixXd inplace = f0;
+  solver.solve(eigen_equation, inplace, inplace, 0.01);
+  check(max_abs_diff(eigen_out, inplace) < 1e-14,
+        "Eigen in-place solve must agree");
+
+  // Coefficient updates after Equation construction are visible.
+  G(1, 1) += 0.25;
+  D11(1, 1) += 0.10;
+  Eigen::MatrixXd updated(n1, n2);
+  solver.solve(eigen_equation, f0, updated, 0.01);
+  check(max_abs_diff(eigen_out, updated) > 1e-12,
+        "Eigen coefficient updates must affect solve");
+
+  // Wrong field sizes are rejected by the existing Solver validation.
+  Eigen::MatrixXd wrong(n1 + 1, n2);
+  expect_throw([&] { solver.solve(eigen_equation, f0, wrong, 0.01); },
+               "wrong Eigen output size must throw");
+  expect_throw([&] { solver.solve(eigen_equation, wrong, eigen_out, 0.01); },
+               "wrong Eigen input size must throw");
+
+  // Mismatched coefficient extents are rejected by Equation.
+  Eigen::MatrixXd bad_D11(n1, n2 + 1);
+  expect_throw(
+      [&] { Equation bad(G, bad_D11, D12, D22, bc); },
+      "mismatched Eigen coefficient extents must throw");
+
+  // Temporary coefficient matrices must not be accepted. The lvalue-only
+  // constructors make both the four-matrix and five-matrix forms ill-formed.
+  static_assert(!std::is_constructible_v<
+                    Equation, Eigen::MatrixXd, Eigen::MatrixXd,
+                    Eigen::MatrixXd, Eigen::MatrixXd, BoundaryConditions&>,
+                "Equation must reject temporary Eigen coefficients");
+  static_assert(!std::is_constructible_v<
+                    Equation, Eigen::MatrixXd, Eigen::MatrixXd,
+                    Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd,
+                    BoundaryConditions&>,
+                "Equation must reject temporary Eigen loss matrices");
+}
+
 void test_validation_errors() {
   Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1});
   CaseConfig config;
@@ -566,6 +692,7 @@ int main() {
   failures += run("source_branch", test_source_branch);
   failures += run("repeated_boundary_updates", test_repeated_boundary_updates);
   failures += run("boundary_reference_semantics", test_boundary_reference_semantics);
+  failures += run("eigen_support", test_eigen_support);
   failures += run("validation_errors", test_validation_errors);
   if (failures == 0) {
     std::cout << "All tests passed.\n";

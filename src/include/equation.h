@@ -2,9 +2,11 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <utility>
 
 #include "array_view2d.h"
 #include "boundary_conditions.h"
+#include "eigen_support.h"
 
 namespace sayram2d {
 
@@ -35,6 +37,29 @@ class Equation {
            ArrayView2D<const double> D12, ArrayView2D<const double> D22,
            BoundaryConditions&& bc) = delete;
 
+  // Direct, zero-copy support for ordinary Eigen::MatrixXd lvalues. The
+  // matrices are stored as non-owning views and must outlive this Equation.
+  // Rvalues are excluded by the lvalue-only constraint.
+  template <typename GMat, typename D11Mat, typename D12Mat, typename D22Mat,
+            std::enable_if_t<is_eigen_matrix_lvalue_v<GMat> &&
+                                 is_eigen_matrix_lvalue_v<D11Mat> &&
+                                 is_eigen_matrix_lvalue_v<D12Mat> &&
+                                 is_eigen_matrix_lvalue_v<D22Mat>,
+                             int> = 0>
+  Equation(GMat&& G, D11Mat&& D11, D12Mat&& D12, D22Mat&& D22,
+           const BoundaryConditions& bc)
+      : Equation(make_view2d(G), make_view2d(D11), make_view2d(D12),
+                 make_view2d(D22), bc) {}
+
+  template <typename GMat, typename D11Mat, typename D12Mat, typename D22Mat,
+            std::enable_if_t<is_eigen_matrix_lvalue_v<GMat> &&
+                                 is_eigen_matrix_lvalue_v<D11Mat> &&
+                                 is_eigen_matrix_lvalue_v<D12Mat> &&
+                                 is_eigen_matrix_lvalue_v<D22Mat>,
+                             int> = 0>
+  Equation(GMat&& G, D11Mat&& D11, D12Mat&& D12, D22Mat&& D22,
+           BoundaryConditions&& bc) = delete;
+
   double G(std::size_t i, std::size_t j) const noexcept { return G_(i, j); }
   double D11(std::size_t i, std::size_t j) const noexcept { return D11_(i, j); }
   double D12(std::size_t i, std::size_t j) const noexcept { return D12_(i, j); }
@@ -62,6 +87,38 @@ class Equation {
     loss_constant_ = true;
     constant_inv_tau_ = inv_tau;
   }
+
+  template <typename Mat,
+            std::enable_if_t<is_eigen_matrix_lvalue_v<Mat>, int> = 0>
+  void set_loss(Mat&& inv_tau) {
+    set_loss(make_view2d(inv_tau));
+  }
+
+  template <typename GMat, typename D11Mat, typename D12Mat, typename D22Mat,
+            typename TauMat,
+            std::enable_if_t<is_eigen_matrix_lvalue_v<GMat> &&
+                                 is_eigen_matrix_lvalue_v<D11Mat> &&
+                                 is_eigen_matrix_lvalue_v<D12Mat> &&
+                                 is_eigen_matrix_lvalue_v<D22Mat> &&
+                                 is_eigen_matrix_lvalue_v<TauMat>,
+                             int> = 0>
+  Equation(GMat&& G, D11Mat&& D11, D12Mat&& D12, D22Mat&& D22,
+           TauMat&& inv_tau, const BoundaryConditions& bc)
+      : Equation(std::forward<GMat>(G), std::forward<D11Mat>(D11),
+                 std::forward<D12Mat>(D12), std::forward<D22Mat>(D22), bc) {
+    set_loss(std::forward<TauMat>(inv_tau));
+  }
+
+  template <typename GMat, typename D11Mat, typename D12Mat, typename D22Mat,
+            typename TauMat,
+            std::enable_if_t<is_eigen_matrix_lvalue_v<GMat> &&
+                                 is_eigen_matrix_lvalue_v<D11Mat> &&
+                                 is_eigen_matrix_lvalue_v<D12Mat> &&
+                                 is_eigen_matrix_lvalue_v<D22Mat> &&
+                                 is_eigen_matrix_lvalue_v<TauMat>,
+                             int> = 0>
+  Equation(GMat&& G, D11Mat&& D11, D12Mat&& D12, D22Mat&& D22,
+           TauMat&& inv_tau, BoundaryConditions&& bc) = delete;
 
   bool has_loss() const noexcept { return loss_set_; }
   double inv_tau(std::size_t i, std::size_t j) const noexcept {

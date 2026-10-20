@@ -2,15 +2,15 @@
 //
 // It solves a small 2-D diffusion problem with constant diagonal
 // coefficients and mixed Dirichlet/ZeroFlux boundaries. The same pattern is
-// used for realistic cases: build a Mesh, describe the coefficient arrays and
-// boundary conditions, construct Equation and Solver, then call solve() once
-// per time step.
+// used for realistic cases: build a Mesh, provide Eigen coefficient matrices
+// and boundary conditions, construct Equation and Solver, then call solve()
+// once per time step.
 
-#include <algorithm>
+#include <Eigen/Dense>
+
 #include <iostream>
-#include <vector>
+#include <utility>
 
-#include "array_view2d.h"
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
@@ -24,13 +24,13 @@ int main() {
 
   const std::size_t n1 = mesh.n1();
   const std::size_t n2 = mesh.n2();
-  const std::size_t cells = n1 * n2;
 
-  // Cell-centered coefficients. D12 is the symmetric off-diagonal component.
-  std::vector<double> G(cells, 1.0);
-  std::vector<double> D11(cells, 1.0);
-  std::vector<double> D12(cells, 0.0);
-  std::vector<double> D22(cells, 1.0);
+  // Cell-centered coefficients. Eigen::MatrixXd is column-major and is
+  // accepted directly by Equation without a copy.
+  Eigen::MatrixXd G = Eigen::MatrixXd::Constant(n1, n2, 1.0);
+  Eigen::MatrixXd D11 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
+  Eigen::MatrixXd D12 = Eigen::MatrixXd::Zero(n1, n2);
+  Eigen::MatrixXd D22 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
 
   // f = 0 on the lower-q1 side; all other sides are zero flux.
   BoundaryConditions bc;
@@ -39,25 +39,21 @@ int main() {
   bc.set_zero_flux(Side::Q2Min);
   bc.set_zero_flux(Side::Q2Max);
 
-  Equation equation(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
-                    make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
+  Equation equation(G, D11, D12, D22, bc);
 
   // The caller owns the evolving field. f_in is time t; f_out receives t+dt.
-  std::vector<double> f_in(cells, 1.0);
-  std::vector<double> f_out(cells, 0.0);
+  Eigen::MatrixXd f_in = Eigen::MatrixXd::Ones(n1, n2);
+  Eigen::MatrixXd f_out = Eigen::MatrixXd::Zero(n1, n2);
 
   Solver solver(mesh);
   const double dt = 0.01;
   for (int step = 0; step < 5; ++step) {
-    solver.solve(equation, make_view2d(f_in, n1, n2),
-                 make_view2d(f_out, n1, n2), dt);
+    solver.solve(equation, f_in, f_out, dt);
     std::swap(f_in, f_out);
   }
 
-  const auto minmax = std::minmax_element(f_in.begin(), f_in.end());
-  const std::size_t center = (n1 / 2) * n2 + (n2 / 2);
-  std::cout << "center f = " << f_in[center] << "\n"
-            << "min f    = " << *minmax.first << "\n"
-            << "max f    = " << *minmax.second << "\n";
+  std::cout << "center f = " << f_in(n1 / 2, n2 / 2) << "\n"
+            << "min f    = " << f_in.minCoeff() << "\n"
+            << "max f    = " << f_in.maxCoeff() << "\n";
   return 0;
 }

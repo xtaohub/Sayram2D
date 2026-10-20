@@ -16,7 +16,7 @@ HDF5 or xtensor.
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. No time step or physical coefficients. |
 | `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Supports row-major, column-major, and noncontiguous slices of larger arrays. |
 | `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices, as required by the discretization. |
-| `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss time, and a non-owning reference to the caller-owned boundary configuration. |
+| `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss time, and a non-owning reference to the caller-owned boundary configuration. Ordinary `Eigen::MatrixXd` coefficients are accepted directly and without copying. |
 | `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs the documented single linear solve. |
 
 ## Build
@@ -56,9 +56,8 @@ make benchmark-new
 ## Usage
 
 ```cpp
-#include <vector>
+#include <Eigen/Dense>
 
-#include "array_view2d.h"
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
@@ -70,10 +69,12 @@ Mesh mesh({0.0, 0.3, 0.7, 1.0}, {0.0, 0.4, 1.0, 1.7});
 
 const std::size_t n1 = mesh.n1();
 const std::size_t n2 = mesh.n2();
-const std::size_t n = n1 * n2;
 
-std::vector<double> G(n, 1.0), D11(n, 1.0), D12(n, 0.0), D22(n, 1.0);
-std::vector<double> f(n, 1.0), f_new(n, 0.0);
+Eigen::MatrixXd G = Eigen::MatrixXd::Constant(n1, n2, 1.0);
+Eigen::MatrixXd D11 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
+Eigen::MatrixXd D12 = Eigen::MatrixXd::Zero(n1, n2);
+Eigen::MatrixXd D22 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
+Eigen::MatrixXd inv_tau = Eigen::MatrixXd::Zero(n1, n2);
 
 BoundaryConditions bc;
 bc.set_dirichlet(Side::Q1Min, 0.5);   // constant value
@@ -81,13 +82,28 @@ bc.set_zero_flux(Side::Q1Max);
 bc.set_zero_flux(Side::Q2Min);
 bc.set_zero_flux(Side::Q2Max);
 
-Equation equation(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
-                  make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
-equation.set_loss(0.0);               // optional; default is zero
-
+Equation equation(G, D11, D12, D22, inv_tau, bc);
 Solver solver(mesh);
-solver.solve(equation, make_view2d(f, n1, n2),
-             make_view2d(f_new, n1, n2), 0.01);
+
+Eigen::MatrixXd f_in = Eigen::MatrixXd::Ones(n1, n2);
+Eigen::MatrixXd f_out(n1, n2);
+solver.solve(equation, f_in, f_out, 0.01);
+```
+
+`Eigen::MatrixXd` is supported directly (zero-copy, column-major). Only
+ordinary `MatrixXd` is accepted this way; `Eigen::Block`, `Eigen::Map`, other
+Eigen expressions, vectors, and other containers require an explicit
+`ArrayView2D`.
+
+The existing view-based interface remains available:
+
+```cpp
+std::vector<double> G(n1 * n2, 1.0), D11(n1 * n2, 1.0);
+std::vector<double> D12(n1 * n2, 0.0), D22(n1 * n2, 1.0);
+
+Equation equation_view(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
+                       make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
+equation_view.set_loss(0.0);          // optional; default is zero
 ```
 
 `ArrayView2D` can also describe a strided slice:
@@ -112,15 +128,17 @@ The default converted data are in
 
 `make test` runs the actual 80×80 Albert–Young case for 10 steps and compares
 it with the legacy reference output. The observed agreement is
-`max |delta f10| = 1.07e-14`.
+`max |delta f10| = 1.07e-14`. The Albert–Young driver uses `Eigen::MatrixXd`
+coefficient and distribution arrays, passed directly to `Equation` and
+`Solver::solve`.
 
 ## Example driver
 
 [`src/main.cc`](src/main.cc) is a short, complete introduction to the API. It
-builds a small nonuniform grid, sets constant coefficients and mixed
-Dirichlet/ZeroFlux boundaries, constructs `Equation` and `Solver`, advances
-five steps with `solve(equation, f_in, f_out, dt)`, and prints the center,
-minimum, and maximum values.
+builds a small nonuniform grid, uses `Eigen::MatrixXd` coefficients and fields,
+sets mixed Dirichlet/ZeroFlux boundaries, constructs `Equation` and `Solver`,
+advances five steps with `solve(equation, f_in, f_out, dt)`, and prints the
+center, minimum, and maximum values.
 
 ```bash
 make example
@@ -143,11 +161,11 @@ construct `Mesh` directly from the q1/q2 edge arrays.
   shared read-only by multiple solver instances.
 - `Solver` stores a reference to the mesh; the mesh must outlive the solver.
 - `Equation` holds non-owning coefficient views and a `const`
-  `BoundaryConditions&`. The caller must keep both the coefficient arrays and
+  `BoundaryConditions&`. The caller must keep both the coefficient matrices and
   the `BoundaryConditions` object alive for as long as the `Equation` is used.
-  Changes to boundary values, boundary types, or data spans are visible on
-  subsequent solves. Construction from a temporary `BoundaryConditions` is
-  rejected at compile time.
+  Changes to coefficient values, boundary values, boundary types, or data spans
+  are visible on subsequent solves. Construction from temporary coefficient
+  matrices or a temporary `BoundaryConditions` is rejected at compile time.
 - `ArrayView2D` never allocates or copies.
 - `Solver::solve(eq, f, f, dt)` is supported for in-place solves; the old field
   is fully read before the output is written.
