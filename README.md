@@ -19,18 +19,22 @@ application, not by the library.
 ### Build and run
 
 ```bash
-make app
+make              # default: build ./sayram2d
+# or: make app
 ./sayram2d [config.ini]
 ```
 
 The command-line argument is an optional INI path. If omitted, the app uses
 `app.ini` in the current working directory. There are no other command-line
 options. Relative paths in the INI resolve against the working directory.
-`make app` writes the executable to `./sayram2d`, next to `app.ini`.
+`make` writes the executable to `./sayram2d`, next to `app.ini`.
 
-The standalone app requires the HDF5 C headers and library. The Makefile
-detects Homebrew HDF5 with `brew --prefix hdf5`; override `HDF5_INCLUDE`,
-`HDF5_LIBDIR`, or `HDF5_LIBS` for other installations.
+The compiler, Eigen, and HDF5 paths are the four variables at the top of the
+[`Makefile`](Makefile). Edit them once for your machine if needed.
+
+The standalone app requires the HDF5 C headers and library. Their paths are
+the `HDF5_INCLUDE` and `HDF5_LIBDIR` variables at the top of the
+[`Makefile`](Makefile); edit them if your installation is elsewhere.
 
 With CMake:
 
@@ -167,23 +171,29 @@ Requirements:
 
 - C++20 compiler
 - Eigen 3.4 or later (header-only)
-- GNU Make and `ar`
+- GNU Make
+- `ar` only when building the static library
+- HDF5 C headers/libraries only for the standalone application
 
-The default Makefile assumes Eigen is under `/Users/xtao/local/include`.
-Override `EIGEN_INCLUDE` and `CXX` as needed:
+The compiler, Eigen, and HDF5 paths are the four variables at the top of the
+[`Makefile`](Makefile). Edit them once for your machine if needed.
 
-```bash
-make EIGEN_INCLUDE=/path/to/eigen CXX=g++
-```
-
-Build the static library:
+Build the standalone app (the default target):
 
 ```bash
 make
 ```
 
-The library itself does not require HDF5. `ar` archives the compiled objects
-into `libsayram2d.a`; the example and application link that archive.
+Build the optional static library:
+
+```bash
+make lib
+```
+
+The library itself does not require HDF5. `make lib` uses `ar` to archive the
+compiled objects into `libsayram2d.a`; the example links that archive. The
+default `make` builds the app directly from source, so it does not require
+`ar`.
 
 ### Embedding example
 

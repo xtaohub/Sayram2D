@@ -6,9 +6,8 @@ CXX := g++-16
 AR ?= ar
 EIGEN_INCLUDE ?= /Users/xtao/local/include
 
-HDF5_PREFIX ?= $(shell brew --prefix hdf5 2>/dev/null)
-HDF5_INCLUDE ?= $(if $(HDF5_PREFIX),$(HDF5_PREFIX)/include,/usr/local/include)
-HDF5_LIBDIR ?= $(if $(HDF5_PREFIX),$(HDF5_PREFIX)/lib,/usr/local/lib)
+HDF5_INCLUDE ?= /opt/homebrew/opt/hdf5/include
+HDF5_LIBDIR ?= /opt/homebrew/opt/hdf5/lib
 HDF5_LIBS ?= -lhdf5
 
 CPPFLAGS ?= -Isrc/include -I$(EIGEN_INCLUDE)
