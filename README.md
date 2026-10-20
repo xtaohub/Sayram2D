@@ -26,6 +26,8 @@ Requirements:
 - C++20 compiler
 - Eigen 3.4 or later (header-only)
 - GNU Make and `ar`
+- HDF5 with C headers/libraries for the standalone application
+  (not required by the numerical library)
 
 The default Makefile assumes Eigen is under `/Users/xtao/local/include`.
 Override `EIGEN_INCLUDE` and `CXX` as needed:
@@ -187,25 +189,102 @@ construct `Mesh` directly from the q1/q2 edge arrays.
 - Higher-dimensional slices, `Eigen::Block`/`Eigen::Map`, and other containers
   must construct an `ArrayView2D` with explicit extents and strides.
 
+## Standalone application
+
+The standalone Albert–Young application is under `src/app/`. It uses the
+redesigned library but keeps configuration and I/O outside it.
+
+```bash
+make app
+./build/sayram2d/sayram2d_app [config.ini]
+```
+
+The default configuration path is `app.ini` in the current working directory.
+A sample is provided at [`app.ini`](app.ini).
+
+### Configuration
+
+```ini
+[run]
+run_id = AlbertYoung
+output_dir = output
+
+[input]
+data_file = data/albert_young/ALBERT_YOUNG_80x80.bin
+
+[time]
+dt = 0.002
+nsteps = 10
+
+[output]
+n_frames = 11
+```
+
+- `run_id` is required and may contain letters, digits, `_`, and `-`.
+- `output_dir` defaults to `output`.
+- `data_file` is the existing `S2DAYD1` mesh/coefficient file.
+- `dt` is in days and must be positive.
+- `nsteps` must be positive; it is used exactly as requested.
+- `n_frames` includes the initial and final snapshots, defaults to
+  `nsteps + 1`, and must satisfy `nsteps % (n_frames - 1) == 0`.
+- Relative paths resolve against the process working directory.
+- Unknown sections/keys, duplicates, malformed numbers, missing required keys,
+  and invalid ranges are rejected with file/line diagnostics.
+- The Albert–Young initial distribution and boundary functions are built in;
+  boundary conditions are not configured through the INI in this phase.
+
+### Output
+
+The app writes one HDF5 file:
+
+```text
+<output_dir>/<run_id>/<run_id>_data.h5
+  /alpha0     pitch-angle cell centers, degrees
+  /logEN      log(E/MeV) - log(0.511875)
+  /t          saved times in days, including 0 and nsteps*dt
+  /f/0        initial distribution
+  /f/1        first saved distribution
+  ...
+```
+
+Fields have shape `(n1, n2)` with `(i, j)` indexing. Eigen matrices are packed
+row-major into an explicit buffer before HDF5 writes; `Eigen::MatrixXd::data()`
+is never written directly. HDF5 is an application dependency only; `make lib`
+and a CMake build with `-DSAYRAM2D_BUILD_APP=OFF` do not link it.
+
+CMake:
+
+```bash
+cmake -S . -B build-cmake
+cmake --build build-cmake
+ctest --test-dir build-cmake --output-on-failure
+./build-cmake/sayram2d_app app.ini
+```
+
+The Makefile detects Homebrew HDF5 with `brew --prefix hdf5`; override
+`HDF5_INCLUDE`, `HDF5_LIBDIR`, or `HDF5_LIBS` for other installations.
+
 ## I/O and configuration
 
 The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
-file-format or configuration dependency. I/O is kept in the test tools:
+file-format or configuration dependency. I/O and configuration live in the
+application and test tools:
 
+- `src/app/config.cc` implements the strict application INI parser;
+- `src/app/io.cc` reads `S2DAYD1` and writes HDF5 using the native C API;
 - `tools/convert_albert_young.py` reads the raw HDF5 tables and writes the
   preprocessed little-endian binary `data/albert_young/ALBERT_YOUNG_80x80.bin`;
-- `tests/albert_young_case.h` loads that binary and validates its header,
-  sizes, truncation, and trailing bytes;
+- `tests/albert_young_case.h` and the application loader validate that binary;
 - `tests/albert_young_reference.cc` writes the comparison CSV with explicit
   metadata: `i` is the q1/alpha index, `j` is the q2/log-E index, and the CSV
   row order is `i*n2+j`;
-- `tests/compare_legacy.py` and `tests/compare_albert_young.py` are the CSV
-  consumers used by `make test`.
+- `tests/compare_legacy.py`, `tests/compare_albert_young.py`, and
+  `tests/compare_app_hdf5.py` are the comparison consumers used by the test
+  targets.
 
-There is currently no production `.ini` or other configuration parser in the
-redesigned library. `src/main.cc` is intentionally hard-coded. The retired
-`p.ini` workflow exists only in the frozen legacy source under
-`tests/legacy/legacy_source/`; it is not part of the new API.
+The retired `p.ini` workflow exists only in the frozen legacy source under
+`tests/legacy/legacy_source/`; the standalone app uses the simplified `app.ini`
+schema above.
 
 ## Concurrency
 
@@ -249,6 +328,7 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 ```
 src/include/        public headers
 src/                implementation and main.cc example
+src/app/            standalone Albert-Young application
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs

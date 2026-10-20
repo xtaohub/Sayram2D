@@ -1,0 +1,21 @@
+Test project /Users/xtao/projects/sayram-2d/build-cmake
+    Start 1: sayram2d_unit
+1/8 Test #1: sayram2d_unit ....................   Passed    0.02 sec
+    Start 2: sayram2d_reference_generate
+2/8 Test #2: sayram2d_reference_generate ......   Passed    0.10 sec
+    Start 3: sayram2d_albert_young_run
+3/8 Test #3: sayram2d_albert_young_run ........   Passed    4.17 sec
+    Start 4: sayram2d_reference_compare
+4/8 Test #4: sayram2d_reference_compare .......   Passed    0.03 sec
+    Start 5: sayram2d_albert_young_compare
+5/8 Test #5: sayram2d_albert_young_compare ....   Passed    0.04 sec
+    Start 6: sayram2d_app_unit
+6/8 Test #6: sayram2d_app_unit ................   Passed    0.44 sec
+    Start 7: sayram2d_app_run
+7/8 Test #7: sayram2d_app_run .................   Passed    4.16 sec
+    Start 8: sayram2d_app_compare
+8/8 Test #8: sayram2d_app_compare .............   Passed    0.10 sec
+
+100% tests passed out of 8
+
+Total Test time (real) =   9.07 sec

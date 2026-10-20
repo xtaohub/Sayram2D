@@ -756,14 +756,14 @@ void test_strided_3d_slice_integration() {
 
   // Change a coefficient and dt after construction, without rebuilding.
   G[0] += 0.25;
-  std::vector<double> changed(n, 0.0);
+  std::vector<double> changed(layers * n, 0.0);
   solver.solve(equation0, slice(f, 0), slice(changed, 0), 0.02);
   check(std::abs(changed[0] - out[0]) > 1e-12,
         "slice coefficient/dt update must affect solve");
 
   // Boundary descriptor changes remain visible through the reference.
   bc.set_dirichlet(Side::Q1Min, 0.5);
-  std::vector<double> boundary_changed(n, 0.0);
+  std::vector<double> boundary_changed(layers * n, 0.0);
   solver.solve(equation0, slice(f, 0), slice(boundary_changed, 0), 0.01);
   check(std::abs(boundary_changed[0] - changed[0]) > 1e-12,
         "slice boundary update must affect solve");

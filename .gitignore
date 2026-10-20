@@ -19,5 +19,7 @@ docs/texput.*
 docs/.vscode/
 
 tests/albert_young/new_reference.csv
-build-cmake/
+build-cmake*/
+CMakeFiles/
+CMakeCache.txt
 albert_young_example.csv

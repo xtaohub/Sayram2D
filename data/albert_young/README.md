@@ -13,8 +13,9 @@ data/raw/AlbertYoung_chorus.h5
 
 `tools/convert_albert_young.py` interpolates these tables once onto a chosen
 Sayram2D cell-center grid and writes the **cell-centered, simulation-ready**
-arrays `G`, `D11`, `D12`, `D22` directly. The C++ case code only loads those
-arrays; it does not interpolate or convert units.
+arrays `G`, `D11`, `D12`, `D22` directly. The C++ cases and the standalone
+application (`src/app/`) load those arrays; they do not interpolate or convert
+units.
 
 ## Converted file
 
