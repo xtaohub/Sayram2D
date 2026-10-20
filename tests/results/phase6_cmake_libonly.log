@@ -26,11 +26,11 @@
 [100%] Built target sayram2d_albert_young
 Test project /Users/xtao/projects/sayram-2d/build-cmake-libonly
     Start 1: sayram2d_unit
-1/5 Test #1: sayram2d_unit ....................   Passed    0.26 sec
+1/5 Test #1: sayram2d_unit ....................   Passed    0.90 sec
     Start 2: sayram2d_reference_generate
-2/5 Test #2: sayram2d_reference_generate ......   Passed    0.53 sec
+2/5 Test #2: sayram2d_reference_generate ......   Passed    0.76 sec
     Start 3: sayram2d_albert_young_run
-3/5 Test #3: sayram2d_albert_young_run ........   Passed    4.38 sec
+3/5 Test #3: sayram2d_albert_young_run ........   Passed    4.39 sec
     Start 4: sayram2d_reference_compare
 4/5 Test #4: sayram2d_reference_compare .......   Passed    0.03 sec
     Start 5: sayram2d_albert_young_compare
@@ -38,4 +38,4 @@ Test project /Users/xtao/projects/sayram-2d/build-cmake-libonly
 
 100% tests passed out of 5
 
-Total Test time (real) =   5.25 sec
+Total Test time (real) =   6.13 sec

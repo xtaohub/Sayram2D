@@ -5,6 +5,4 @@
 [ 70%] Built target sayram2d_tests
 [ 80%] Built target sayram2d_reference
 [ 90%] Built target sayram2d_albert_young
-[ 95%] Building CXX object CMakeFiles/sayram2d_app_tests.dir/tests/test_app.cc.o
-[100%] Linking CXX executable sayram2d_app_tests
 [100%] Built target sayram2d_app_tests

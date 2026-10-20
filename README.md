@@ -128,8 +128,9 @@ The real Albert–Young diffusion tables are preprocessed once by
 `tools/convert_albert_young.py` into cell-centered `G`, `D11`, `D12`, and `D22`
 arrays. The C++ case does not interpolate or convert the raw coefficients.
 The default converted data are in
-`data/albert_young/ALBERT_YOUNG_80x80.bin`; see
-`data/albert_young/README.md` for units, formulas, and the binary format.
+`data/albert_young/ALBERT_YOUNG_80x80.h5`; see
+`data/albert_young/README.md` for units, formulas, and the HDF5 format. The
+legacy binary fixture remains for the regression harness.
 
 `make test` runs the actual 80×80 Albert–Young case for 10 steps and compares
 it with the legacy reference output. The observed agreement is
@@ -180,10 +181,11 @@ construct `Mesh` directly from the q1/q2 edge arrays.
 - `ArrayView2D<T>::operator()(i, j)` addresses element
   `data()[i * stride1() + j * stride2()]`. The view stores extents and strides
   explicitly; it never infers layout from the container.
-- The Albert–Young binary file stores arrays in **row-major** order, with
-  `G[i*n2+j]` corresponding to `q1_centers[i]` and `q2_centers[j]`. The loader
-  reads this order explicitly and the C++ case copies into Eigen
-  column-major matrices by `(i, j)`.
+- The Albert–Young HDF5 input stores named datasets `/alpha0_edges`,
+  `/alpha0_centers`, `/logE_edges`, `/logE_centers`, `/G`, `/D11`, `/D12`, and
+  `/D22`. `G[i,j]` corresponds to `alpha0_centers[i]` and `logE_centers[j]`.
+  The loader reads these datasets explicitly and fills Eigen column-major
+  matrices by `(i,j)`.
 - `Eigen::MatrixXd` is column-major and is mapped to
   `stride1 = 1`, `stride2 = rows` without copying.
 - Higher-dimensional slices, `Eigen::Block`/`Eigen::Map`, and other containers
@@ -210,7 +212,7 @@ run_id = AlbertYoung
 output_dir = output
 
 [input]
-data_file = data/albert_young/ALBERT_YOUNG_80x80.bin
+data_file = data/albert_young/ALBERT_YOUNG_80x80.h5
 
 [time]
 dt = 0.002
@@ -222,7 +224,8 @@ n_frames = 11
 
 - `run_id` is required and may contain letters, digits, `_`, and `-`.
 - `output_dir` defaults to `output`.
-- `data_file` is the existing `S2DAYD1` mesh/coefficient file.
+- `data_file` is the HDF5 mesh/coefficient file described in
+  [`data/albert_young/README.md`](data/albert_young/README.md).
 - `dt` is in days and must be positive.
 - `nsteps` must be positive; it is used exactly as requested.
 - `n_frames` includes the initial and final snapshots, defaults to
@@ -271,10 +274,13 @@ file-format or configuration dependency. I/O and configuration live in the
 application and test tools:
 
 - `src/app/config.cc` implements the strict application INI parser;
-- `src/app/io.cc` reads `S2DAYD1` and writes HDF5 using the native C API;
-- `tools/convert_albert_young.py` reads the raw HDF5 tables and writes the
-  preprocessed little-endian binary `data/albert_young/ALBERT_YOUNG_80x80.bin`;
-- `tests/albert_young_case.h` and the application loader validate that binary;
+- `src/app/io.cc` reads the HDF5 mesh/coefficient file and writes HDF5 output
+  using the native C API;
+- `tools/convert_albert_young.py` reads the raw HDF5 tables and writes
+  `data/albert_young/ALBERT_YOUNG_80x80.h5`; it can also write the legacy
+  `S2DAYD1` regression binary;
+- `tests/albert_young_case.h` validates the legacy binary used by the
+  regression harness; the application loader validates the HDF5 input;
 - `tests/albert_young_reference.cc` writes the comparison CSV with explicit
   metadata: `i` is the q1/alpha index, `j` is the q2/log-E index, and the CSV
   row order is `i*n2+j`;

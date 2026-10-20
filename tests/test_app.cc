@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -48,7 +47,7 @@ void test_config() {
   const auto config = load_config("tests/app_test.ini");
   check(config.run_id == "AppTest", "run_id");
   check(config.output_dir == "build/app_test_output", "output_dir");
-  check(config.data_file == "data/albert_young/ALBERT_YOUNG_80x80.bin",
+  check(config.data_file == "data/albert_young/ALBERT_YOUNG_80x80.h5",
         "data_file");
   check(near(config.dt, 0.002) && config.nsteps == 10 && config.n_frames == 11,
         "time/output settings");
@@ -114,7 +113,7 @@ void test_config() {
 }
 
 void test_input_loader() {
-  const auto data = load_input("data/albert_young/ALBERT_YOUNG_80x80.bin");
+  const auto data = load_input("data/albert_young/ALBERT_YOUNG_80x80.h5");
   check(data.n1 == 80 && data.n2 == 80, "input dimensions");
   check(data.q1_edges.size() == 81 && data.q2_edges.size() == 81,
         "input edge lengths");
@@ -123,41 +122,28 @@ void test_input_loader() {
         "input matrix dimensions");
   check(data.G(0, 0) == data.G(0, 0), "input coefficients are finite");
 
-  std::ifstream input("data/albert_young/ALBERT_YOUNG_80x80.bin",
-                      std::ios::binary);
-  check(static_cast<bool>(input), "cannot read reference input");
-  const std::vector<char> bytes((std::istreambuf_iterator<char>(input)),
-                                std::istreambuf_iterator<char>());
   const auto temporary =
-      std::filesystem::temp_directory_path() / "sayram2d_app_input_test.bin";
-  auto write_temporary = [&](const std::vector<char>& content) {
-    std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
-    check(static_cast<bool>(output), "cannot write test input");
-    output.write(content.data(), static_cast<std::streamsize>(content.size()));
-    check(static_cast<bool>(output), "cannot write test input data");
-  };
-  auto expect_bad = [&](const std::vector<char>& content,
-                        const std::string& message) {
-    write_temporary(content);
-    expect_throw([&] { (void)load_input(temporary); }, message);
-  };
-
-  auto malformed = bytes;
-  malformed[0] = 'X';
-  expect_bad(malformed, "bad input magic must throw");
-  malformed = bytes;
-  malformed.resize(malformed.size() - 1);
-  expect_bad(malformed, "truncated input must throw");
-  malformed = bytes;
-  malformed.push_back('\0');
-  expect_bad(malformed, "trailing input data must throw");
+      std::filesystem::temp_directory_path() / "sayram2d_app_input_test.h5";
+  {
+    HDF5Output incomplete(temporary, data.n1, data.n2);
+    incomplete.write_times({0.0});
+  }
+  expect_throw(
+      [&] { (void)load_input(temporary); },
+      "HDF5 input without required datasets must throw");
   std::filesystem::remove(temporary);
-  expect_throw([] { (void)load_input("missing-input.bin"); },
+
+  write_text(temporary, "not an HDF5 file");
+  expect_throw([&] { (void)load_input(temporary); },
+               "corrupt HDF5 input must throw");
+  std::filesystem::remove(temporary);
+  expect_throw([] { (void)load_input("missing-input.h5"); },
                "missing input must throw");
+
 }
 
 void test_albert_young_setup() {
-  const auto data = load_input("data/albert_young/ALBERT_YOUNG_80x80.bin");
+  const auto data = load_input("data/albert_young/ALBERT_YOUNG_80x80.h5");
   const Mesh mesh(data.q1_edges, data.q2_edges);
   const AlbertYoungModel model(mesh);
 

@@ -17,44 +17,75 @@ arrays `G`, `D11`, `D12`, `D22` directly. The C++ cases and the standalone
 application (`src/app/`) load those arrays; they do not interpolate or convert
 units.
 
-## Converted file
+## Converted files
 
-`ALBERT_YOUNG_80x80.bin` was generated with the default conversion settings:
+The standalone application reads the self-describing HDF5 file
+`ALBERT_YOUNG_80x80.h5`. The legacy `S2DAYD1` binary
+`ALBERT_YOUNG_80x80.bin` is retained only for the existing regression harness.
+
+Both were generated with the default conversion settings:
 
 ```
 alpha0 in [5, 90] degrees, n1 = 80
 E in [0.2, 5] MeV, log-spaced, n2 = 80
 ```
 
-Reproduce with:
+Reproduce both with:
 
 ```bash
 python3 tools/convert_albert_young.py \
   --input data/raw/AlbertYoung_chorus.h5 \
-  --output data/albert_young/ALBERT_YOUNG_80x80.bin \
+  --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
+  --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \
   --n1 80 --n2 80 --alpha-min 5 --alpha-max 90 --E-min 0.2 --E-max 5
 ```
 
-Format (little-endian):
+### HDF5 input layout
 
+```text
+/alpha0_edges    float64[n1+1]   alpha0 in radians
+/alpha0_centers  float64[n1]     alpha0 in radians
+/logE_edges      float64[n2+1]   log(E/MeV)
+/logE_centers    float64[n2]     log(E/MeV)
+/G               float64[n1,n2]  cell-centered
+/D11             float64[n1,n2]
+/D12             float64[n1,n2]
+/D22             float64[n1,n2]
 ```
+
+Root attributes:
+
+```text
+format_version = 1
+index_order = "row-major i*n2+j"
+alpha0_units = "rad"
+logE_units = "log(E/MeV)"
+```
+
+`G[i,j]`, `D11[i,j]`, etc. correspond to `alpha0_centers[i]` and
+`logE_centers[j]`. The application reads the HDF5 datasets explicitly by name;
+the on-disk order is documented rather than inferred from Eigen layout.
+
+### Legacy regression binary
+
+The S2DAYD1 binary has the same arrays in a positional layout:
+
+```text
 magic[8] = b"S2DAYD1"
 int32 version = 1
 int32 n1, int32 n2
-float64 q1_edges[n1+1]      alpha0 in radians
-float64 q2_edges[n2+1]      log(E/MeV)
+float64 q1_edges[n1+1]
+float64 q2_edges[n2+1]
 float64 q1_centers[n1]
 float64 q2_centers[n2]
-float64 G[n1*n2]            row-major, index i*n2+j
+float64 G[n1*n2]       row-major, index i*n2+j
 float64 D11[n1*n2]
 float64 D12[n1*n2]
 float64 D22[n1*n2]
 ```
 
-All arrays are written row-major. `G[i*n2+j]`, `D11[i*n2+j]`, etc. correspond
-to `q1_centers[i]` and `q2_centers[j]`; the C++ loader reads this explicit
-order. The `Case` helper then fills Eigen column-major matrices by `(i,j)`, so
-the file order is never inferred from the in-memory Eigen layout.
+It is used by `tests/albert_young_case.h` so the numerical regression tests do
+not require HDF5. The standalone app does not read this binary.
 
 ## Conversion formulas
 
@@ -77,7 +108,8 @@ The interpolation uses the same alpha/logE bilinear rule as the legacy
 ## Verification
 
 `tests/albert_young_reference.cc` runs the real 80×80 case for 10 steps at
-`dt = 0.002` days using only this converted file. The result matches the legacy
+`dt = 0.002` days using the legacy binary fixture. The standalone app reads the
+HDF5 file and writes a matching HDF5 result. Both results match the legacy
 Albert–Young run saved in `tests/albert_young/legacy_reference.csv`:
 
 - maximum `|delta f0| = 8.88e-16`;

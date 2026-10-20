@@ -6,26 +6,30 @@ normalized units. This tool interpolates them to a chosen Sayram2D cell-center
 grid and applies the coordinate/momentum/unit conversions once, so the C++
 case code can consume G, D11, D12, D22 directly.
 
-The output format is a small little-endian binary file:
+The primary output is a self-describing HDF5 file:
 
-  magic[8] = b"S2DAYD1"
-  int32 version (= 1)
-  int32 n1, int32 n2
-  float64 q1_edges[n1+1]
-  float64 q2_edges[n2+1]
-  float64 q1_centers[n1]
-  float64 q2_centers[n2]
-  float64 G[n1*n2]       (row-major, index i*n2+j)
-  float64 D11[n1*n2]
-  float64 D12[n1*n2]
-  float64 D22[n1*n2]
+  /alpha0_edges    float64[n1+1]   radians
+  /alpha0_centers  float64[n1]     radians
+  /logE_edges      float64[n2+1]   log(E/MeV)
+  /logE_centers    float64[n2]     log(E/MeV)
+  /G               float64[n1,n2]  row-major, index i*n2+j
+  /D11             float64[n1,n2]
+  /D12             float64[n1,n2]
+  /D22             float64[n1,n2]
+
+The HDF5 attributes document the index order and coordinate units. The
+standalone application reads this HDF5 file. An optional S2DAYD1 binary can
+also be written for the pre-existing regression harness:
+
+  --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin
 
 q1 is alpha0 in radians; q2 is log(E), with E in MeV.
 
 Example:
   python3 tools/convert_albert_young.py \
     --input data/raw/AlbertYoung_chorus.h5 \
-    --output data/albert_young/ALBERT_YOUNG_80x80.bin \
+    --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
+    --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \
     --n1 80 --n2 80 --alpha-min 5 --alpha-max 90 --E-min 0.2 --E-max 5
 """
 
@@ -92,7 +96,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", default="data/raw/AlbertYoung_chorus.h5")
     parser.add_argument("--output",
-                        default="data/albert_young/ALBERT_YOUNG_80x80.bin")
+                        default="data/albert_young/ALBERT_YOUNG_80x80.h5",
+                        help="HDF5 output file")
+    parser.add_argument("--binary-output", default=None,
+                        help="optional legacy S2DAYD1 binary output")
     parser.add_argument("--n1", type=int, default=80)
     parser.add_argument("--n2", type=int, default=80)
     parser.add_argument("--alpha-min", type=float, default=5.0,
@@ -154,13 +161,34 @@ def main() -> None:
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("wb") as stream:
-        stream.write(struct.pack("<8siii", b"S2DAYD1", 1, args.n1, args.n2))
-        for array in (q1_edges, q2_edges, q1_centers, q2_centers,
-                      G, D11, D12, D22):
-            np.ascontiguousarray(array, dtype="<f8").tofile(stream)
+    with h5py.File(output, "w") as handle:
+        handle.attrs["format_version"] = 1
+        handle.attrs["index_order"] = "row-major i*n2+j"
+        handle.attrs["alpha0_units"] = "rad"
+        handle.attrs["logE_units"] = "log(E/MeV)"
+        for name, array in (
+            ("alpha0_edges", q1_edges),
+            ("alpha0_centers", q1_centers),
+            ("logE_edges", q2_edges),
+            ("logE_centers", q2_centers),
+            ("G", G),
+            ("D11", D11),
+            ("D12", D12),
+            ("D22", D22),
+        ):
+            handle.create_dataset(name, data=np.asarray(array, dtype=np.float64))
 
     print(f"wrote {output}")
+
+    if args.binary_output:
+        binary_output = Path(args.binary_output)
+        binary_output.parent.mkdir(parents=True, exist_ok=True)
+        with binary_output.open("wb") as stream:
+            stream.write(struct.pack("<8siii", b"S2DAYD1", 1, args.n1, args.n2))
+            for array in (q1_edges, q2_edges, q1_centers, q2_centers,
+                          G, D11, D12, D22):
+                np.ascontiguousarray(array, dtype="<f8").tofile(stream)
+        print(f"wrote {binary_output} (legacy regression fixture)")
     print(f"  n1={args.n1} n2={args.n2}")
     print(f"  alpha=[{args.alpha_min},{args.alpha_max}] deg, "
           f"E=[{args.e_min},{args.e_max}] MeV")

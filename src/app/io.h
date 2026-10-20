@@ -11,8 +11,8 @@
 
 namespace sayram2d::app {
 
-// Mesh and cell-centered coefficients loaded from the existing S2DAYD1 file.
-// File arrays are row-major; matrices are explicitly filled by (i, j).
+// Mesh and cell-centered coefficients loaded from the self-describing HDF5
+// input file. Matrices are explicitly filled by (i, j).
 struct InputData {
   std::size_t n1 = 0;
   std::size_t n2 = 0;
