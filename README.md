@@ -4,6 +4,8 @@
 
 While Sayram-2D is specifically developed for modeling **radiation belt dynamics**, the underlying numerical method is general. With minor modifications, the code can also be applied to **other two-dimensional diffusion equations** written in conservative form.
 
+Prepare to extend Sayram-2D further so it can be easily used in 3D and 4D codes.
+
 > **Note**  
 > This code was previously released under the repository name **`fvm2d`**.  
 > It has been renamed **Sayram-2D** to better reflect its role within the Sayram framework.  
