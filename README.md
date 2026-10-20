@@ -16,7 +16,7 @@ HDF5 or xtensor.
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. No time step or physical coefficients. |
 | `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Supports row-major, column-major, and noncontiguous slices of larger arrays. |
 | `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices, as required by the discretization. |
-| `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss time, and a copy of the boundary configuration. |
+| `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss time, and a non-owning reference to the caller-owned boundary configuration. |
 | `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs the documented single linear solve. |
 
 ## Build
@@ -142,9 +142,12 @@ construct `Mesh` directly from the q1/q2 edge arrays.
 - `Mesh` owns its geometry and is immutable after construction. It may be
   shared read-only by multiple solver instances.
 - `Solver` stores a reference to the mesh; the mesh must outlive the solver.
-- `Equation` and `BoundaryConditions` hold non-owning views/spans. The caller
-  owns the coefficient arrays and the array-valued Dirichlet data, which must
-  remain valid and may be updated in place between solves.
+- `Equation` holds non-owning coefficient views and a `const`
+  `BoundaryConditions&`. The caller must keep both the coefficient arrays and
+  the `BoundaryConditions` object alive for as long as the `Equation` is used.
+  Changes to boundary values, boundary types, or data spans are visible on
+  subsequent solves. Construction from a temporary `BoundaryConditions` is
+  rejected at compile time.
 - `ArrayView2D` never allocates or copies.
 - `Solver::solve(eq, f, f, dt)` is supported for in-place solves; the old field
   is fully read before the output is written.

@@ -6,6 +6,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "reference_case.h"
@@ -418,6 +419,68 @@ void test_repeated_boundary_updates() {
         "solver reuse with a different BC type");
 }
 
+void test_boundary_reference_semantics() {
+  // Equation stores a reference, so descriptor/type/span changes made after
+  // construction must be visible on the next solve.
+  Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1, 1.7});
+  CaseConfig config;
+  config.bc = reference::all_zeroflux();
+  config.inv_tau = 0.0;
+  config.off_diagonal = false;
+  config.varying_coefficients = false;
+  CaseData data(mesh, config);
+  Solver solver(mesh);
+
+  const std::size_t n1 = mesh.n1();
+  const std::size_t n2 = mesh.n2();
+  const std::size_t n = n1 * n2;
+  const std::vector<double> f0 = data.f();
+
+  auto solve_to = [&](std::vector<double>& out) {
+    solver.solve(data.equation(), make_view2d(f0.data(), n1, n2),
+                 make_view2d(out.data(), n1, n2), 0.01);
+  };
+
+  std::vector<double> all_zero_flux(n);
+  solve_to(all_zero_flux);
+
+  // ZeroFlux -> Dirichlet after Equation construction.
+  data.bc().set_dirichlet(Side::Q1Min, 0.0);
+  std::vector<double> dirichlet_zero(n);
+  solve_to(dirichlet_zero);
+  check(max_abs_diff(all_zero_flux, dirichlet_zero) > 1e-13,
+        "descriptor type change must affect solve");
+
+  // Modify a constant Dirichlet value after construction.
+  data.bc().set_dirichlet(Side::Q1Min, 0.5);
+  std::vector<double> dirichlet_half(n);
+  solve_to(dirichlet_half);
+  check(max_abs_diff(dirichlet_zero, dirichlet_half) > 1e-13,
+        "Dirichlet value change must affect solve");
+
+  // Replace the boundary data span after construction.
+  std::vector<double> replacement(n2 + 1, 0.2);
+  data.bc().set_dirichlet(Side::Q1Min, replacement);
+  std::vector<double> span_replaced(n);
+  solve_to(span_replaced);
+  check(max_abs_diff(dirichlet_half, span_replaced) > 1e-13,
+        "boundary span replacement must affect solve");
+
+  // Invalid length introduced after construction is rejected next solve.
+  std::vector<double> wrong_length(n2, 0.1);
+  data.bc().set_dirichlet(Side::Q1Max, wrong_length);
+  expect_throw([&] { solve_to(span_replaced); },
+               "invalid boundary configuration after construction must throw");
+
+  // A temporary BoundaryConditions must not be accepted. The deleted
+  // rvalue overload makes this construction ill-formed.
+  static_assert(!std::is_constructible_v<
+                    Equation, ArrayView2D<const double>,
+                    ArrayView2D<const double>, ArrayView2D<const double>,
+                    ArrayView2D<const double>, BoundaryConditions&&>,
+                "Equation must reject temporary BoundaryConditions");
+}
+
 void test_validation_errors() {
   Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1});
   CaseConfig config;
@@ -502,6 +565,7 @@ int main() {
   failures += run("conservation_and_positivity", test_conservation_and_positivity);
   failures += run("source_branch", test_source_branch);
   failures += run("repeated_boundary_updates", test_repeated_boundary_updates);
+  failures += run("boundary_reference_semantics", test_boundary_reference_semantics);
   failures += run("validation_errors", test_validation_errors);
   if (failures == 0) {
     std::cout << "All tests passed.\n";

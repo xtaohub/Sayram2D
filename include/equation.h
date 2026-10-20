@@ -8,10 +8,11 @@
 
 namespace sayram2d {
 
-// Cell-centered coefficient views plus a copy of the boundary configuration.
-// The underlying coefficient and boundary arrays are owned by the caller and
-// must remain valid for as long as this Equation is used. Values may be
-// updated in place between solves.
+// Cell-centered coefficient views plus a non-owning reference to the
+// caller-owned boundary configuration. The caller must keep the
+// BoundaryConditions object and the coefficient arrays alive for as long as
+// this Equation is used. Changes to the boundary descriptor, its spans, or its
+// values are visible to subsequent solves.
 class Equation {
  public:
   Equation(ArrayView2D<const double> G, ArrayView2D<const double> D11,
@@ -28,6 +29,11 @@ class Equation {
           "Equation: G, D11, D12, and D22 must have identical extents");
     }
   }
+
+  // BoundaryConditions must be owned by the caller; reject temporaries.
+  Equation(ArrayView2D<const double> G, ArrayView2D<const double> D11,
+           ArrayView2D<const double> D12, ArrayView2D<const double> D22,
+           BoundaryConditions&& bc) = delete;
 
   double G(std::size_t i, std::size_t j) const noexcept { return G_(i, j); }
   double D11(std::size_t i, std::size_t j) const noexcept { return D11_(i, j); }
@@ -69,6 +75,8 @@ class Equation {
   bool loss_is_constant() const noexcept { return loss_constant_; }
   double constant_inv_tau() const noexcept { return constant_inv_tau_; }
 
+  // Non-owning accessor; the caller's BoundaryConditions object must outlive
+  // this Equation.
   const BoundaryConditions& bc() const noexcept { return bc_; }
 
  private:
@@ -80,7 +88,7 @@ class Equation {
   double constant_inv_tau_ = 0.0;
   bool loss_set_ = false;
   bool loss_constant_ = true;
-  BoundaryConditions bc_;
+  const BoundaryConditions& bc_;
 };
 
 }  // namespace sayram2d

@@ -154,6 +154,8 @@ class CaseData {
   }
   sayram2d::Equation& equation() { return *equation_; }
   const sayram2d::Equation& equation() const { return *equation_; }
+  sayram2d::BoundaryConditions& bc() noexcept { return bc_; }
+  const sayram2d::BoundaryConditions& bc() const noexcept { return bc_; }
   const std::vector<double>& f() const { return f_; }
   std::vector<double>& f() { return f_; }
   const std::vector<double>& G() const { return G_; }
