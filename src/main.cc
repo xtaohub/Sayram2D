@@ -1,4 +1,6 @@
 // A short introduction to the Sayram2D library.
+// This is the dependency-free library example; the full standalone
+// application is src/app/main.cc.
 //
 // It solves a small 2-D diffusion problem with constant diagonal
 // coefficients and mixed Dirichlet/ZeroFlux boundaries. The same pattern is

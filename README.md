@@ -267,6 +267,39 @@ ctest --test-dir build-cmake --output-on-failure
 The Makefile detects Homebrew HDF5 with `brew --prefix hdf5`; override
 `HDF5_INCLUDE`, `HDF5_LIBDIR`, or `HDF5_LIBS` for other installations.
 
+## Quick case workflow
+
+A minimal case Makefile is provided separately from the main build/tests
+Makefile:
+
+```bash
+make -f Makefile.case          # build and run the 1-day Albert-Young case
+make -f Makefile.case plot     # run and write figures/*.pdf and *.png
+make -f Makefile.case help
+```
+
+It uses [`config/albert_young_1day.ini`](config/albert_young_1day.ini):
+`dt = 0.002` days, `nsteps = 500`, and 11 output frames at 0, 0.1, ..., 1.0
+day. The resulting HDF5 file is
+`output/AlbertYoung1day/AlbertYoung1day_data.h5`.
+
+The plot compares the app result with the committed legacy 1-day reference
+[`tests/albert_young/legacy_reference_1day.h5`](tests/albert_young/legacy_reference_1day.h5)
+at 0.5 and 2 MeV for 0.1 and 1 day. Outputs are
+[`figures/albert_young_profiles.png`](figures/albert_young_profiles.png) and
+[`figures/albert_young_difference.png`](figures/albert_young_difference.png),
+with PDF versions alongside them.
+
+There are two `main.cc` files by design:
+
+- [`src/main.cc`](src/main.cc) is the small, dependency-free library example
+  built as `sayram2d_example`; it demonstrates the API with a 4×2 grid.
+- [`src/app/main.cc`](src/app/main.cc) is the full standalone application that
+  reads INI/HDF5 input and writes HDF5 output.
+
+The library example stays tiny and independent of HDF5; the app contains the
+input/configuration/output workflow.
+
 ## I/O and configuration
 
 The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
@@ -335,6 +368,9 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 src/include/        public headers
 src/                implementation and main.cc example
 src/app/            standalone Albert-Young application
+config/             example case configurations
+scripts/            plotting utilities
+figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs

@@ -1,0 +1,40 @@
+# Simple one-case workflow. The full project build/test Makefile is ./Makefile.
+#
+#   make -f Makefile.case          # build and run the 1-day AY case
+#   make -f Makefile.case plot     # run and generate comparison figures
+#
+# Override paths on the command line if needed:
+#   make -f Makefile.case CONFIG=my.ini NEW_H5=... plot
+
+CONFIG     ?= config/albert_young_1day.ini
+APP        ?= build/sayram2d/sayram2d_app
+NEW_H5     ?= output/AlbertYoung1day/AlbertYoung1day_data.h5
+LEGACY_H5  ?= tests/albert_young/legacy_reference_1day.h5
+FIGDIR     ?= figures
+PYTHON     ?= python3
+
+.PHONY: all app run plot help clean-figures
+
+all: run
+
+app:
+	$(MAKE) -f Makefile app
+
+run: app
+	$(APP) $(CONFIG)
+
+plot: run
+	@mkdir -p $(FIGDIR) build/mpl
+	MPLCONFIGDIR=$(CURDIR)/build/mpl $(PYTHON) scripts/plot_albert_young.py \
+		--new $(NEW_H5) --legacy $(LEGACY_H5) --outdir $(FIGDIR)
+
+help:
+	@printf '%s\n' \
+	  'make -f Makefile.case          build and run $(CONFIG)' \
+	  'make -f Makefile.case plot     run and write $(FIGDIR)/*.pdf,png' \
+	  'make -f Makefile.case run      run only' \
+	  'make -f Makefile.case app      build only' \
+	  'make -f Makefile.case clean-figures'
+
+clean-figures:
+	rm -rf $(FIGDIR)

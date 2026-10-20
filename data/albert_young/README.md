@@ -123,3 +123,8 @@ make test
 # or
 make albert-young
 ```
+
+The committed `tests/albert_young/legacy_reference_1day.h5` is the legacy
+standalone application output for the same 80×80 case advanced to 1 day
+(`dt = 0.002`, `nsteps = 500`, 11 frames at 0, 0.1, ..., 1.0 day). It is used
+by `make -f Makefile.case plot` for the 0.5/2 MeV profile comparison.

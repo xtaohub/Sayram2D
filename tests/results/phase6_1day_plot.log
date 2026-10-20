@@ -1,0 +1,11 @@
+/Applications/Xcode.app/Contents/Developer/usr/bin/make -f Makefile app
+make[1]: Nothing to be done for `app'.
+build/sayram2d/sayram2d_app config/albert_young_1day.ini
+wrote "output/AlbertYoung1day/AlbertYoung1day_data.h5"
+  n1=80 n2=80 nsteps=500 n_frames=11 dt=0.002 days
+MPLCONFIGDIR=/Users/xtao/projects/sayram-2d/build/mpl python3 scripts/plot_albert_young.py \
+		--new output/AlbertYoung1day/AlbertYoung1day_data.h5 --legacy tests/albert_young/legacy_reference_1day.h5 --outdir figures
+max |new - legacy| at 0.1 day (0.5/2 MeV): 3.330669e-16
+max |new - legacy| at 1 day (0.5/2 MeV): 1.276756e-15
+wrote figures/albert_young_profiles.pdf
+wrote figures/albert_young_difference.pdf
