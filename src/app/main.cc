@@ -1,6 +1,6 @@
 // Standalone SAYRAM2D Albert-Young simulation application.
 //
-// Usage: sayram2d_app [config.ini]
+// Usage: sayram2d [config.ini]
 // The default configuration path is app.ini, resolved from the current
 // working directory.
 
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
               << config.n_frames << " dt=" << config.dt << " days\n";
     return 0;
   } catch (const std::exception& error) {
-    std::cerr << "sayram2d_app: " << error.what() << "\n";
+    std::cerr << "sayram2d: " << error.what() << "\n";
     return 1;
   }
 }

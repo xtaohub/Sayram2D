@@ -27,7 +27,7 @@ AY_BIN := $(BUILD_DIR)/albert_young_reference
 AY_DATA := data/albert_young/ALBERT_YOUNG_80x80.bin
 AY_NEW := tests/albert_young/new_reference.csv
 EXAMPLE_BIN := $(BUILD_DIR)/example
-APP_BIN := $(BUILD_DIR)/sayram2d_app
+APP_BIN := sayram2d
 APP_TEST_BIN := $(BUILD_DIR)/test_app
 APP_TEST_CONFIG := tests/app_test.ini
 
@@ -89,7 +89,7 @@ $(APP_BIN): src/app/main.cc src/app/config.cc src/app/io.cc src/app/albert_young
 app: $(APP_BIN)
 
 app-run: $(APP_BIN)
-	$(APP_BIN) app.ini
+	./$(APP_BIN) app.ini
 
 $(APP_TEST_BIN): tests/test_app.cc src/app/config.cc src/app/io.cc src/app/albert_young.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
@@ -99,7 +99,7 @@ $(APP_TEST_BIN): tests/test_app.cc src/app/config.cc src/app/io.cc src/app/alber
 
 app-test: $(APP_BIN) $(APP_TEST_BIN)
 	$(APP_TEST_BIN)
-	$(APP_BIN) $(APP_TEST_CONFIG)
+	./$(APP_BIN) $(APP_TEST_CONFIG)
 	python3 tests/compare_app_hdf5.py \
 		build/app_test_output/AppTest/AppTest_data.h5 \
 		tests/albert_young/legacy_reference.csv
@@ -112,7 +112,7 @@ test: $(TEST_BIN) $(REF_BIN) $(AY_BIN) $(APP_BIN) $(APP_TEST_BIN)
 	python3 tests/compare_albert_young.py \
 		tests/albert_young/legacy_reference.csv $(AY_NEW)
 	$(APP_TEST_BIN)
-	$(APP_BIN) $(APP_TEST_CONFIG)
+	./$(APP_BIN) $(APP_TEST_CONFIG)
 	python3 tests/compare_app_hdf5.py \
 		build/app_test_output/AppTest/AppTest_data.h5 \
 		tests/albert_young/legacy_reference.csv
@@ -127,4 +127,4 @@ benchmark-new: $(BENCH_BIN)
 	$(BENCH_BIN) 500 500 3 tests/results/benchmark_new.csv
 
 clean:
-	rm -rf $(BUILD_DIR) $(REF_DIR) $(AY_NEW)
+	rm -rf $(BUILD_DIR) $(REF_DIR) $(AY_NEW) $(APP_BIN)

@@ -1,7 +1,7 @@
 [ 20%] Built target sayram2d
 [ 30%] Built target sayram2d_example
 [ 50%] Built target sayram2d_app_core
-[ 60%] Built target sayram2d_app
+[ 60%] Built target sayram2d_cli
 [ 70%] Built target sayram2d_tests
 [ 80%] Built target sayram2d_reference
 [ 90%] Built target sayram2d_albert_young

@@ -20,12 +20,13 @@ application, not by the library.
 
 ```bash
 make app
-./build/sayram2d/sayram2d_app [config.ini]
+./sayram2d [config.ini]
 ```
 
 The command-line argument is an optional INI path. If omitted, the app uses
 `app.ini` in the current working directory. There are no other command-line
 options. Relative paths in the INI resolve against the working directory.
+`make app` writes the executable to `./sayram2d`, next to `app.ini`.
 
 The standalone app requires the HDF5 C headers and library. The Makefile
 detects Homebrew HDF5 with `brew --prefix hdf5`; override `HDF5_INCLUDE`,
@@ -36,8 +37,11 @@ With CMake:
 ```bash
 cmake -S . -B build-cmake
 cmake --build build-cmake
-./build-cmake/sayram2d_app app.ini
+./sayram2d app.ini
 ```
+
+The CMake target is `sayram2d_cli`; its output name is `sayram2d` and it is
+placed at the repository root, next to `app.ini`.
 
 ### Configuration expected by the app
 
@@ -242,6 +246,41 @@ auto view = make_view2d(data.data() + 1, n1, n2, n2 * 2, 2);
 
 The optional `container_adapter.h` provides `make_view2d(container)` for
 xtensor-like 2-D containers; the core does not include xtensor.
+
+### Using the solver from a 3D code
+
+If a 3D caller stores fields with the slice index fastest, for example
+`volume[(i*n2 + j)*n3 + k]`, each 2D layer is an explicit strided view:
+
+```cpp
+const std::size_t n3 = 8;
+std::vector<double> G(n1 * n2 * n3, 1.0);
+std::vector<double> D11(n1 * n2 * n3, 1.0);
+std::vector<double> D12(n1 * n2 * n3, 0.0);
+std::vector<double> D22(n1 * n2 * n3, 1.0);
+std::vector<double> f(n1 * n2 * n3);
+std::vector<double> f_next(n1 * n2 * n3);
+
+auto layer = [&](std::vector<double>& values, std::size_t k) {
+  return make_view2d(values.data() + k, n1, n2,
+                     static_cast<std::ptrdiff_t>(n2 * n3),
+                     static_cast<std::ptrdiff_t>(n3));
+};
+
+Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
+BoundaryConditions bc;           // shared or per-layer; caller-owned
+Solver solver(mesh);
+
+for (std::size_t k = 0; k < n3; ++k) {
+  Equation equation(layer(G, k), layer(D11, k), layer(D12, k),
+                    layer(D22, k), bc);
+  solver.solve(equation, layer(f, k), layer(f_next, k), dt);
+}
+```
+
+The view stores the explicit strides; no 3D container is copied or
+interpreted by the library. `Solver` is reusable across sequential layers with
+the same mesh. Use a separate `Solver` instance for concurrent solves.
 
 ### Example driver
 

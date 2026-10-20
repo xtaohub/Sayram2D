@@ -37,10 +37,10 @@ python3 tests/compare_albert_young.py \
 [PASS] Albert-Young 80x80: max |delta f0|=8.882e-16, max |delta f10|=1.066e-14, min f0=2.220e-16, min f10=1.335e-16
 build/sayram2d/test_app
 All standalone application tests passed.
-build/sayram2d/sayram2d_app tests/app_test.ini
+./sayram2d tests/app_test.ini
 wrote "build/app_test_output/AppTest/AppTest_data.h5"
   n1=80 n2=80 nsteps=10 n_frames=11 dt=0.002 days
 python3 tests/compare_app_hdf5.py \
 		build/app_test_output/AppTest/AppTest_data.h5 \
 		tests/albert_young/legacy_reference.csv
-[PASS] standalone HDF5: max|df0|=8.882e-16, max|df10|=1.066e-14, max|dalpha|=1.421e-14, max|dlogEN|=4.441e-16
+[PASS] standalone HDF5: max|df0|=8.882e-16, max|df10|=8.438e-15, max|dalpha|=1.421e-14, max|dlogEN|=4.441e-16

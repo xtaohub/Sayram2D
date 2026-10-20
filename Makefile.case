@@ -7,7 +7,7 @@
 #   make -f Makefile.case CONFIG=my.ini NEW_H5=... plot
 
 CONFIG     ?= config/albert_young_1day.ini
-APP        ?= build/sayram2d/sayram2d_app
+APP        ?= ./sayram2d
 NEW_H5     ?= output/AlbertYoung1day/AlbertYoung1day_data.h5
 LEGACY_H5  ?= tests/albert_young/legacy_reference_1day.h5
 FIGDIR     ?= figures

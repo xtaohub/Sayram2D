@@ -88,10 +88,13 @@ if(SAYRAM2D_BUILD_APP)
     target_compile_options(sayram2d_app_core PRIVATE -Wall -Wextra)
   endif()
 
-  add_executable(sayram2d_app src/app/main.cc)
-  target_link_libraries(sayram2d_app PRIVATE sayram2d_app_core)
+  add_executable(sayram2d_cli src/app/main.cc)
+  target_link_libraries(sayram2d_cli PRIVATE sayram2d_app_core)
+  set_target_properties(sayram2d_cli PROPERTIES
+    OUTPUT_NAME sayram2d
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(sayram2d_app PRIVATE -Wall -Wextra)
+    target_compile_options(sayram2d_cli PRIVATE -Wall -Wextra)
   endif()
 endif()
 
@@ -144,7 +147,8 @@ if(BUILD_TESTING)
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_test(NAME sayram2d_app_run
-      COMMAND sayram2d_app ${CMAKE_CURRENT_SOURCE_DIR}/tests/app_test.ini)
+      COMMAND $<TARGET_FILE:sayram2d_cli>
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/app_test.ini)
     set_tests_properties(sayram2d_app_run PROPERTIES
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
