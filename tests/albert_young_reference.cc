@@ -40,9 +40,12 @@ int main(int argc, char** argv) {
   std::ofstream out(argv[2]);
   if (!out) throw std::runtime_error("cannot write output CSV");
   out << std::setprecision(17);
-  out << "# source=redesigned Albert_Young case, 80x80, 10 steps, dt=0.002 days\n";
+  out << "# source=redesigned Albert_Young case, " << n1 << "x" << n2
+      << ", " << steps << " steps, dt=" << dt << " days\n";
   out << "# n1=" << n1 << "\n# n2=" << n2 << "\n# steps=" << steps
       << "\n# dt=" << dt << "\n";
+  out << "# index_order=row-major i*n2+j; i=q1(alpha0), j=q2(logE)\n";
+  out << "# q1_unit=rad, q2=log(E/MeV)\n";
   out << "# min0=" << f0.minCoeff() << "\n";
   out << "# min10=" << f10.minCoeff() << "\n";
   out << "i,j,f0,f10\n";

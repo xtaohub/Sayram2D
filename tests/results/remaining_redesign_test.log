@@ -1,0 +1,37 @@
+build/sayram2d/test_sayram2d
+[PASS] mesh_geometry
+[PASS] array_views
+[PASS] boundary_conditions
+[PASS] solve_and_inplace
+[PASS] conservation_and_positivity
+[PASS] source_branch
+[PASS] repeated_boundary_updates
+[PASS] boundary_reference_semantics
+[PASS] eigen_support
+[PASS] albert_young_loader
+[PASS] strided_3d_slice_integration
+[PASS] validation_errors
+All tests passed.
+build/sayram2d/new_reference build/new_reference
+uniform_diag_all_dirichlet n1=12 n2=10 mass0=1.20156 massN=0.789356 min0=0.904169 minN=0.487744
+nonuniform_diag_mixed n1=10 n2=11 mass0=1.20151 massN=0.962555 min0=0.902447 minN=0.462893
+nonuniform_offdiag_mixed n1=10 n2=11 mass0=1.20151 massN=0.96132 min0=0.902447 minN=0.460064
+uniform_offdiag_all_zeroflux n1=12 n2=10 mass0=1.20156 massN=1.20156 min0=0.904169 minN=0.97022
+nonuniform_offdiag_loss n1=10 n2=11 mass0=1.20151 massN=0.942506 min0=0.902447 minN=0.457779
+nonuniform_offdiag_source n1=10 n2=11 mass0=1.20151 massN=0.96525 min0=0.902447 minN=0.460548
+python3 tests/compare_legacy.py build/new_reference tests/legacy/reference
+[PASS] uniform_diag_all_dirichlet: max |delta f| = 6.661e-16
+[PASS] nonuniform_diag_mixed: max |delta f| = 1.221e-15
+[PASS] nonuniform_offdiag_mixed: max |delta f| = 1.221e-15
+[PASS] uniform_offdiag_all_zeroflux: max |delta f| = 1.110e-15
+[PASS] nonuniform_offdiag_loss: max |delta f| = 1.443e-15
+[PASS] ZeroFlux conservation: relative mass change 1.848e-16
+[PASS] negative inverse loss source: mass 0.96132035024051321 -> 0.96524953320078044
+[INFO] legacy-vs-new negative-tau mass delta: 1.043e-04 (expected; documented source treatment differs)
+
+All legacy comparisons passed.
+build/sayram2d/albert_young_reference data/albert_young/ALBERT_YOUNG_80x80.bin tests/albert_young/new_reference.csv
+min0=2.22045e-16 min10=1.33499e-16
+python3 tests/compare_albert_young.py \
+		tests/albert_young/legacy_reference.csv tests/albert_young/new_reference.csv
+[PASS] Albert-Young 80x80: max |delta f0|=8.882e-16, max |delta f10|=1.066e-14, min f0=2.220e-16, min f10=1.335e-16

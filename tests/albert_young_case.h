@@ -59,14 +59,18 @@ inline Data load_data(const std::string& path) {
   stream.read(reinterpret_cast<char*>(&version), sizeof(version));
   stream.read(reinterpret_cast<char*>(&n1), sizeof(n1));
   stream.read(reinterpret_cast<char*>(&n2), sizeof(n2));
-  if (!stream || std::string(magic, 7) != "S2DAYD1" || version != 1 ||
-      n1 <= 0 || n2 <= 0) {
+  constexpr char expected_magic[] = "S2DAYD1";
+  if (!stream || std::string(magic, 7) != expected_magic || magic[7] != '\0' ||
+      version != 1 || n1 <= 0 || n2 <= 0) {
     throw std::runtime_error("invalid Albert-Young binary header: " + path);
   }
 
   Data data;
   data.n1 = static_cast<std::size_t>(n1);
   data.n2 = static_cast<std::size_t>(n2);
+  if (data.n1 > std::numeric_limits<std::size_t>::max() / data.n2) {
+    throw std::runtime_error("Albert-Young dimensions overflow: " + path);
+  }
   const std::size_t cells = data.n1 * data.n2;
 
   auto read_array = [&](std::vector<double>& values, std::size_t count,
@@ -88,6 +92,9 @@ inline Data load_data(const std::string& path) {
   read_array(data.D11, cells, "D11");
   read_array(data.D12, cells, "D12");
   read_array(data.D22, cells, "D22");
+  if (stream.peek() != std::char_traits<char>::eof()) {
+    throw std::runtime_error("trailing data after Albert-Young arrays: " + path);
+  }
   return data;
 }
 

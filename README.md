@@ -173,6 +173,48 @@ construct `Mesh` directly from the q1/q2 edge arrays.
 - `Solver::solve(eq, f, f, dt)` is supported for in-place solves; the old field
   is fully read before the output is written.
 
+## Indexing and strides
+
+- `ArrayView2D<T>::operator()(i, j)` addresses element
+  `data()[i * stride1() + j * stride2()]`. The view stores extents and strides
+  explicitly; it never infers layout from the container.
+- The Albert–Young binary file stores arrays in **row-major** order, with
+  `G[i*n2+j]` corresponding to `q1_centers[i]` and `q2_centers[j]`. The loader
+  reads this order explicitly and the C++ case copies into Eigen
+  column-major matrices by `(i, j)`.
+- `Eigen::MatrixXd` is column-major and is mapped to
+  `stride1 = 1`, `stride2 = rows` without copying.
+- Higher-dimensional slices, `Eigen::Block`/`Eigen::Map`, and other containers
+  must construct an `ArrayView2D` with explicit extents and strides.
+
+## I/O and configuration
+
+The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
+file-format or configuration dependency. I/O is kept in the test tools:
+
+- `tools/convert_albert_young.py` reads the raw HDF5 tables and writes the
+  preprocessed little-endian binary `data/albert_young/ALBERT_YOUNG_80x80.bin`;
+- `tests/albert_young_case.h` loads that binary and validates its header,
+  sizes, truncation, and trailing bytes;
+- `tests/albert_young_reference.cc` writes the comparison CSV with explicit
+  metadata: `i` is the q1/alpha index, `j` is the q2/log-E index, and the CSV
+  row order is `i*n2+j`;
+- `tests/compare_legacy.py` and `tests/compare_albert_young.py` are the CSV
+  consumers used by `make test`.
+
+There is currently no production `.ini` or other configuration parser in the
+redesigned library. `src/main.cc` is intentionally hard-coded. The retired
+`p.ini` workflow exists only in the frozen legacy source under
+`tests/legacy/legacy_source/`; it is not part of the new API.
+
+## Concurrency
+
+A `Solver` owns its sparse matrix, factorization, and numerical workspaces and
+is not safe for concurrent `solve()` calls on the same instance. Use one
+`Solver` per concurrent solve. There is no restriction on sharing an immutable
+`Mesh`, read-only coefficient data, or separate `BoundaryConditions` objects
+across solver instances.
+
 ## Boundary conditions
 
 - `ZeroFlux` is the default on all four sides.

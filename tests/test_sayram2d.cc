@@ -2,7 +2,10 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -11,6 +14,7 @@
 
 #include <Eigen/Dense>
 
+#include "albert_young_case.h"
 #include "reference_case.h"
 #include "array_view2d.h"
 #include "boundary_conditions.h"
@@ -607,6 +611,164 @@ void test_eigen_support() {
                 "Equation must not have an inv_tau constructor");
 }
 
+void test_albert_young_loader() {
+  const std::filesystem::path source =
+      "data/albert_young/ALBERT_YOUNG_80x80.bin";
+  const auto data = albert_young::load_data(source.string());
+  check(data.n1 == 80 && data.n2 == 80, "loader dimensions");
+  check(data.q1_edges.size() == 81 && data.q2_edges.size() == 81,
+        "loader edge sizes");
+  check(data.G.size() == 6400 && data.D11.size() == 6400 &&
+            data.D12.size() == 6400 && data.D22.size() == 6400,
+        "loader coefficient sizes");
+
+  std::ifstream input(source, std::ios::binary);
+  check(static_cast<bool>(input), "cannot read reference binary");
+  const std::vector<char> bytes((std::istreambuf_iterator<char>(input)),
+                                std::istreambuf_iterator<char>());
+  check(!bytes.empty(), "reference binary is empty");
+
+  const auto temporary =
+      std::filesystem::temp_directory_path() /
+      "sayram2d_albert_young_loader_test.bin";
+  auto write_temporary = [&](const std::vector<char>& content) {
+    std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
+    check(static_cast<bool>(output), "cannot open loader test file");
+    output.write(content.data(), static_cast<std::streamsize>(content.size()));
+    check(static_cast<bool>(output), "cannot write loader test file");
+  };
+  auto expect_bad_file = [&](const std::vector<char>& content,
+                             const char* message) {
+    write_temporary(content);
+    expect_throw(
+        [&] { (void)albert_young::load_data(temporary.string()); }, message);
+  };
+
+  write_temporary(bytes);
+  const auto round_trip = albert_young::load_data(temporary.string());
+  check(round_trip.n1 == data.n1 && round_trip.n2 == data.n2 &&
+            round_trip.G == data.G && round_trip.D22 == data.D22,
+        "loader round trip");
+
+  auto malformed = bytes;
+  malformed[0] = 'X';
+  expect_bad_file(malformed, "bad magic must be rejected");
+
+  malformed = bytes;
+  malformed.resize(malformed.size() - 1);
+  expect_bad_file(malformed, "truncated binary must be rejected");
+
+  malformed = bytes;
+  malformed.push_back('\0');
+  expect_bad_file(malformed, "trailing binary data must be rejected");
+
+  std::filesystem::remove(temporary);
+  expect_throw([] { (void)albert_young::load_data("missing.bin"); },
+               "missing binary must be rejected");
+}
+
+void test_strided_3d_slice_integration() {
+  // Two interleaved layers of a 3-D buffer, accessed through explicit
+  // arbitrary-stride ArrayView2D slices. This is the caller-controlled path
+  // for slices; the core never infers layout from a container.
+  Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.2});
+  const std::size_t n1 = mesh.n1();
+  const std::size_t n2 = mesh.n2();
+  const std::size_t n = n1 * n2;
+  const std::size_t layers = 2;
+
+  std::vector<double> G(layers * n);
+  std::vector<double> D11(layers * n);
+  std::vector<double> D12(layers * n);
+  std::vector<double> D22(layers * n);
+  std::vector<double> f(layers * n);
+  std::vector<double> out(layers * n, 0.0);
+
+  auto slice = [&](std::vector<double>& values, std::size_t layer) {
+    return make_view2d(values.data() + layer, n1, n2,
+                       static_cast<std::ptrdiff_t>(layers * n2),
+                       static_cast<std::ptrdiff_t>(layers));
+  };
+
+  for (std::size_t i = 0; i < n1; ++i) {
+    for (std::size_t j = 0; j < n2; ++j) {
+      for (std::size_t layer = 0; layer < layers; ++layer) {
+        const std::size_t index = (i * n2 + j) * layers + layer;
+        G[index] = 1.0 + 0.1 * static_cast<double>(layer);
+        D11[index] = 1.0;
+        D12[index] = 0.0;
+        D22[index] = 0.9 + 0.1 * static_cast<double>(layer);
+        f[index] = 1.0 + static_cast<double>(layer) + 0.1 * (i + j);
+      }
+    }
+  }
+
+  BoundaryConditions bc;
+  bc.set_dirichlet(Side::Q1Min, 0.0);
+  bc.set_zero_flux(Side::Q1Max);
+  bc.set_zero_flux(Side::Q2Min);
+  bc.set_zero_flux(Side::Q2Max);
+
+  Solver solver(mesh);
+  Equation equation0(slice(G, 0), slice(D11, 0), slice(D12, 0),
+                     slice(D22, 0), bc);
+  Equation equation1(slice(G, 1), slice(D11, 1), slice(D12, 1),
+                     slice(D22, 1), bc);
+
+  solver.solve(equation0, slice(f, 0), slice(out, 0), 0.01);
+  solver.solve(equation1, slice(f, 1), slice(out, 1), 0.01);
+
+  // Equivalent standalone layer-0 problem.
+  std::vector<double> G0(n), D110(n), D120(n), D220(n), f0(n), out0(n);
+  for (std::size_t k = 0; k < n; ++k) {
+    G0[k] = G[k * layers];
+    D110[k] = D11[k * layers];
+    D120[k] = D12[k * layers];
+    D220[k] = D22[k * layers];
+    f0[k] = f[k * layers];
+  }
+  Equation standalone(make_view2d(G0, n1, n2), make_view2d(D110, n1, n2),
+                     make_view2d(D120, n1, n2), make_view2d(D220, n1, n2),
+                     bc);
+  Solver standalone_solver(mesh);
+  standalone_solver.solve(standalone, make_view2d(f0, n1, n2),
+                          make_view2d(out0, n1, n2), 0.01);
+
+  double baseline_diff = 0.0;
+  double layer_diff = 0.0;
+  for (std::size_t k = 0; k < n; ++k) {
+    baseline_diff =
+        std::max(baseline_diff, std::abs(out[k * layers] - out0[k]));
+    layer_diff = std::max(
+        layer_diff, std::abs(out[k * layers] - out[k * layers + 1]));
+  }
+  check(baseline_diff < 1e-14,
+        "strided slice solve must agree with standalone 2-D solve");
+  check(layer_diff > 1e-12, "3-D slices must remain isolated");
+
+  auto out0_view = slice(out, 0);
+  auto out1_view = slice(out, 1);
+  check(out0_view.data() == out.data() && out1_view.data() == out.data() + 1,
+        "slice data pointers must alias the 3-D buffer");
+  check(out0_view.stride1() == static_cast<std::ptrdiff_t>(layers * n2) &&
+            out0_view.stride2() == static_cast<std::ptrdiff_t>(layers),
+        "slice strides must be explicit");
+
+  // Change a coefficient and dt after construction, without rebuilding.
+  G[0] += 0.25;
+  std::vector<double> changed(n, 0.0);
+  solver.solve(equation0, slice(f, 0), slice(changed, 0), 0.02);
+  check(std::abs(changed[0] - out[0]) > 1e-12,
+        "slice coefficient/dt update must affect solve");
+
+  // Boundary descriptor changes remain visible through the reference.
+  bc.set_dirichlet(Side::Q1Min, 0.5);
+  std::vector<double> boundary_changed(n, 0.0);
+  solver.solve(equation0, slice(f, 0), slice(boundary_changed, 0), 0.01);
+  check(std::abs(boundary_changed[0] - changed[0]) > 1e-12,
+        "slice boundary update must affect solve");
+}
+
 void test_validation_errors() {
   Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1});
   CaseConfig config;
@@ -693,6 +855,9 @@ int main() {
   failures += run("repeated_boundary_updates", test_repeated_boundary_updates);
   failures += run("boundary_reference_semantics", test_boundary_reference_semantics);
   failures += run("eigen_support", test_eigen_support);
+  failures += run("albert_young_loader", test_albert_young_loader);
+  failures += run("strided_3d_slice_integration",
+                  test_strided_3d_slice_integration);
   failures += run("validation_errors", test_validation_errors);
   if (failures == 0) {
     std::cout << "All tests passed.\n";

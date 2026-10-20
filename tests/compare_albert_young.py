@@ -54,6 +54,11 @@ def main() -> int:
         raise SystemExit("legacy comparison file lacks f0/f10")
     if "f0" not in new_header or "f10" not in new_header:
         raise SystemExit("new comparison file lacks f0/f10")
+    expected_index_order = "row-major i*n2+j; i=q1(alpha0), j=q2(logE)"
+    if new_meta.get("index_order") != expected_index_order:
+        raise SystemExit("new comparison file has missing/incorrect index_order")
+    if new_meta.get("n1") != "80" or new_meta.get("n2") != "80":
+        raise SystemExit("new comparison file has unexpected dimensions")
     if len(legacy) != 6400 or len(new) != 6400:
         raise SystemExit("expected 80x80 = 6400 cells in both files")
 

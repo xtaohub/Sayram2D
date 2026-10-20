@@ -18,7 +18,7 @@ arrays; it does not interpolate or convert units.
 
 ## Converted file
 
-`ALBERT_YOUNG_80x80.bin` was generated with the default `p.ini` configuration:
+`ALBERT_YOUNG_80x80.bin` was generated with the default conversion settings:
 
 ```
 alpha0 in [5, 90] degrees, n1 = 80
@@ -49,6 +49,11 @@ float64 D11[n1*n2]
 float64 D12[n1*n2]
 float64 D22[n1*n2]
 ```
+
+All arrays are written row-major. `G[i*n2+j]`, `D11[i*n2+j]`, etc. correspond
+to `q1_centers[i]` and `q2_centers[j]`; the C++ loader reads this explicit
+order. The `Case` helper then fills Eigen column-major matrices by `(i,j)`, so
+the file order is never inferred from the in-memory Eigen layout.
 
 ## Conversion formulas
 
