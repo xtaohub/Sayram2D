@@ -114,6 +114,30 @@ The default converted data are in
 it with the legacy reference output. The observed agreement is
 `max |delta f10| = 1.07e-14`.
 
+## Example driver
+
+The standalone Albert–Young example is in
+[`examples/albert_young/main.cc`](examples/albert_young/main.cc). It loads the
+preprocessed cell-centered coefficients, runs ten steps, updates `D11`/`D22`
+in place without rebuilding the solver, and writes a CSV field.
+
+```bash
+make example
+# writes build/albert_young_example.csv
+```
+
+CMake target:
+
+```bash
+cmake -S . -B build-cmake
+cmake --build build-cmake --target sayram2d_albert_young
+./build-cmake/sayram2d_albert_young \
+  data/albert_young/ALBERT_YOUNG_80x80.bin build/albert_young_example.csv
+```
+
+The former `Grid2D` is merged into `Mesh`; the example constructs `Mesh`
+directly from the q1/q2 edge arrays.
+
 ## Ownership and lifetime
 
 - `Mesh` owns its geometry and is immutable after construction. It may be
@@ -160,6 +184,7 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 ```
 include/sayram2d/   public headers
 src/                library implementation
+examples/           standalone Albert-Young example driver
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs

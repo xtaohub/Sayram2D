@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 namespace sayram2d {
 namespace {
@@ -24,15 +25,16 @@ Solver::Solver(const Mesh& mesh)
       lambda_(mesh.n_cells()) {
   rhs_.setZero();
   solution_.setZero();
-  triplets_.reserve(6 * mesh.n_cells());
+  triplets_.reserve(5 * mesh.n_cells());
   build_pattern();
 }
 
 void Solver::build_pattern() {
   triplets_.clear();
-  triplets_.reserve(6 * mesh_.n_cells());
+  triplets_.reserve(5 * mesh_.n_cells());
 
-  // Every cell has a diagonal entry.
+  // Every cell has a diagonal entry. Boundary Dirichlet faces also add only a
+  // diagonal entry, which is already present.
   for (std::size_t i = 0; i < mesh_.n1(); ++i) {
     for (std::size_t j = 0; j < mesh_.n2(); ++j) {
       const auto k = static_cast<int>(mesh_.cell_index({i, j}));
@@ -40,15 +42,14 @@ void Solver::build_pattern() {
     }
   }
 
-  // Interior-face pattern: four entries per shared face. Boundary Dirichlet
-  // faces add only a diagonal entry, which is already present.
+  // Each interior face contributes two off-diagonal structural entries. The
+  // four numerical entries are still assembled per face; the diagonal
+  // duplicates are summed by setFromTriplets().
   for (std::size_t i = 1; i < mesh_.n1(); ++i) {
     for (std::size_t j = 0; j < mesh_.n2(); ++j) {
       const auto k = static_cast<int>(mesh_.cell_index({i, j}));
       const auto l = static_cast<int>(mesh_.cell_index({i - 1, j}));
-      triplets_.emplace_back(k, k, 1.0);
       triplets_.emplace_back(k, l, 1.0);
-      triplets_.emplace_back(l, l, 1.0);
       triplets_.emplace_back(l, k, 1.0);
     }
   }
@@ -56,9 +57,7 @@ void Solver::build_pattern() {
     for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       const auto k = static_cast<int>(mesh_.cell_index({i, j}));
       const auto l = static_cast<int>(mesh_.cell_index({i, j - 1}));
-      triplets_.emplace_back(k, k, 1.0);
       triplets_.emplace_back(k, l, 1.0);
-      triplets_.emplace_back(l, l, 1.0);
       triplets_.emplace_back(l, k, 1.0);
     }
   }
@@ -66,6 +65,13 @@ void Solver::build_pattern() {
   matrix_.setFromTriplets(triplets_.begin(), triplets_.end());
   matrix_.makeCompressed();
   linear_solver_.analyzePattern(matrix_);
+  // SparseLU does not mark the decomposition initialized until factorize(),
+  // so info() cannot be queried here. lastErrorMessage() is empty on success.
+  const std::string analysis_error = linear_solver_.lastErrorMessage();
+  if (!analysis_error.empty()) {
+    throw std::runtime_error(
+        "Solver: sparse symbolic analysis failed: " + analysis_error);
+  }
   triplets_.clear();
 }
 
@@ -105,9 +111,10 @@ void Solver::validate(const Equation& equation, ArrayView2D<const double> f_in,
     throw std::invalid_argument("Solver::solve: inverse loss is not finite");
   }
   if (equation.has_loss() && !equation.loss_is_constant()) {
-    const auto tau = equation.inv_tau_view();
-    if (tau.extent1() != mesh_.n1() || tau.extent2() != mesh_.n2() ||
-        tau.data() == nullptr) {
+    const auto inv_tau_field = equation.inv_tau_view();
+    if (inv_tau_field.extent1() != mesh_.n1() ||
+        inv_tau_field.extent2() != mesh_.n2() ||
+        inv_tau_field.data() == nullptr) {
       throw std::invalid_argument(
           "Solver::solve: inverse loss view does not match the mesh");
     }
@@ -120,9 +127,10 @@ void Solver::validate(const Equation& equation, ArrayView2D<const double> f_in,
       const double d12 = D12(i, j);
       const double d22 = D22(i, j);
       const double f = f_in(i, j);
-      const double tau = equation.inv_tau(i, j);
+      const double inv_tau = equation.inv_tau(i, j);
       if (!std::isfinite(g) || !std::isfinite(d11) || !std::isfinite(d12) ||
-          !std::isfinite(d22) || !std::isfinite(f) || !std::isfinite(tau)) {
+          !std::isfinite(d22) || !std::isfinite(f) ||
+          !std::isfinite(inv_tau)) {
         throw std::invalid_argument(
             "Solver::solve: non-finite coefficient, input, or loss value");
       }
@@ -159,7 +167,7 @@ void Solver::update_vertex_f(const Equation& equation,
   const std::size_t n2 = mesh_.n2();
   const std::size_t nv1 = n1 + 1;
   auto v = [&](std::size_t i, std::size_t j) -> double& {
-    return vertex_f_[j * nv1 + i];
+    return vertex_f_[flat_index(i, j, nv1)];
   };
   auto lerp = [](double x, double x0, double x1, double f0, double f1) {
     const double denom = x1 - x0;
@@ -169,7 +177,8 @@ void Solver::update_vertex_f(const Equation& equation,
     return w0 * f0 + w1 * f1;
   };
 
-  // Corners: the single adjacent cell value.
+  // Corners start from the single adjacent cell value. Dirichlet boundary
+  // data overwrite them below when the corresponding side is Dirichlet.
   v(0, 0) = f_in(0, 0);
   v(n1, 0) = f_in(n1 - 1, 0);
   v(0, n2) = f_in(0, n2 - 1);
@@ -333,17 +342,9 @@ void Solver::assemble(const Equation& equation, ArrayView2D<const double> f_in,
   for (Side side : all_sides()) {
     if (!bc.is_dirichlet(side)) continue;
 
-    std::size_t count = 0;
-    switch (side) {
-      case Side::Q1Min:
-      case Side::Q1Max:
-        count = mesh_.n2();
-        break;
-      case Side::Q2Min:
-      case Side::Q2Max:
-        count = mesh_.n1();
-        break;
-    }
+    const std::size_t count =
+        (side == Side::Q1Min || side == Side::Q1Max) ? mesh_.n2()
+                                                     : mesh_.n1();
 
     for (std::size_t k = 0; k < count; ++k) {
       Ind cell{};
@@ -380,21 +381,22 @@ void Solver::assemble(const Equation& equation, ArrayView2D<const double> f_in,
     }
   }
 
-  // Time term, implicit loss (tau > 0), and explicit source (tau < 0).
+  // Time term: inv_tau > 0 is implicit loss; inv_tau < 0 is an explicit
+  // source added to the right-hand side.
   for (std::size_t i = 0; i < mesh_.n1(); ++i) {
     for (std::size_t j = 0; j < mesh_.n2(); ++j) {
       const Ind cell{i, j};
       const double uk = equation.G(i, j) * mesh_.cell_measure(cell) / dt;
       const double f_old = f_in(i, j);
-      const double tau = equation.inv_tau(i, j);
+      const double inv_tau = equation.inv_tau(i, j);
       const auto K = static_cast<int>(mesh_.cell_index(cell));
-      if (tau >= 0.0) {
-        triplets_.emplace_back(K, K, uk * (1.0 + dt * tau));
+      if (inv_tau >= 0.0) {
+        triplets_.emplace_back(K, K, uk * (1.0 + dt * inv_tau));
         rhs_(K) += uk * f_old;
       } else {
-        // -f/tau is a source: R += G*area*f/|tau| = uk*dt*(-tau)*f.
+        // Negative inverse loss is a source: R += G*area*f*(-inv_tau)*dt.
         triplets_.emplace_back(K, K, uk);
-        rhs_(K) += uk * f_old * (1.0 - dt * tau);
+        rhs_(K) += uk * f_old * (1.0 - dt * inv_tau);
       }
     }
   }
@@ -413,11 +415,14 @@ void Solver::solve(const Equation& equation, ArrayView2D<const double> f_in,
 
   linear_solver_.factorize(matrix_);
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse factorization failed");
+    throw std::runtime_error(
+        "Solver::solve: sparse factorization failed: " +
+        linear_solver_.lastErrorMessage());
   }
   solution_ = linear_solver_.solve(rhs_);
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse solve failed");
+    throw std::runtime_error("Solver::solve: sparse solve failed: " +
+                             linear_solver_.lastErrorMessage());
   }
 
   // All reads of f_in are complete at this point, so f_out may alias f_in.

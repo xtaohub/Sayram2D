@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "sayram2d/index.h"
+
 namespace sayram2d {
 
 enum class Side : std::uint8_t { Q1Min = 0, Q1Max = 1, Q2Min = 2, Q2Max = 3 };
@@ -61,7 +63,7 @@ class Mesh {
   std::size_t n_vertices1() const noexcept { return n1_ + 1; }
   std::size_t n_vertices2() const noexcept { return n2_ + 1; }
   std::size_t cell_index(Ind cell) const noexcept {
-    return cell.j * n1_ + cell.i;
+    return flat_index(cell.i, cell.j, n1_);
   }
 
   const std::vector<double>& q1_edges() const noexcept { return q1_edges_; }

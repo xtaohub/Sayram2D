@@ -37,11 +37,14 @@ old = """  update_lambda(equation);
 
   linear_solver_.factorize(matrix_);
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse factorization failed");
+    throw std::runtime_error(
+        "Solver::solve: sparse factorization failed: " +
+        linear_solver_.lastErrorMessage());
   }
   solution_ = linear_solver_.solve(rhs_);
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse solve failed");
+    throw std::runtime_error("Solver::solve: sparse solve failed: " +
+                             linear_solver_.lastErrorMessage());
   }
 
   // All reads of f_in are complete at this point, so f_out may alias f_in.
@@ -65,14 +68,17 @@ new = """  const double t_vertex0 = new_now_sec();
   linear_solver_.factorize(matrix_);
   g_new_factorize_sec += new_now_sec() - t_factor0;
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse factorization failed");
+    throw std::runtime_error(
+        "Solver::solve: sparse factorization failed: " +
+        linear_solver_.lastErrorMessage());
   }
 
   const double t_solve0 = new_now_sec();
   solution_ = linear_solver_.solve(rhs_);
   g_new_solve_sec += new_now_sec() - t_solve0;
   if (linear_solver_.info() != Eigen::Success) {
-    throw std::runtime_error("Solver::solve: sparse solve failed");
+    throw std::runtime_error("Solver::solve: sparse solve failed: " +
+                             linear_solver_.lastErrorMessage());
   }
 
   const double t_scatter0 = new_now_sec();

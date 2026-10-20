@@ -1,0 +1,9 @@
+Phase 2 pre/post numerical comparison
+
+albert_young_new_reference.csv: max_abs_diff=0 rows=6400
+nonuniform_diag_mixed.csv: max_abs_diff=0 rows=110
+nonuniform_offdiag_loss.csv: max_abs_diff=0 rows=110
+nonuniform_offdiag_mixed.csv: max_abs_diff=0 rows=110
+nonuniform_offdiag_source.csv: max_abs_diff=0 rows=110
+uniform_diag_all_dirichlet.csv: max_abs_diff=0 rows=120
+uniform_offdiag_all_zeroflux.csv: max_abs_diff=0 rows=120
