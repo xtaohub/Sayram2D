@@ -97,6 +97,7 @@ def main() -> int:
         ax.set_title(f"{panel}  $E = {energy:g}$ MeV")
         ax.set_xlabel(r"$\alpha_0$ [deg]")
         ax.set_ylabel(r"$f$" if ax is axes[0] else "")
+        ax.set_yscale("log")
         ax.set_xlim(alpha_new[0], alpha_new[-1])
     fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False,
                bbox_to_anchor=(0.5, -0.02), fontsize="small")

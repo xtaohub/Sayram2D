@@ -158,9 +158,6 @@ cmake --build build-cmake --target sayram2d_example
 ./build-cmake/sayram2d_example
 ```
 
-The former `Grid2D` is merged into `Mesh`; both the example and the library
-construct `Mesh` directly from the q1/q2 edge arrays.
-
 ## Ownership and lifetime
 
 - `Mesh` owns its geometry and is immutable after construction. It may be
@@ -288,7 +285,8 @@ The plot compares the app result with the committed legacy 1-day reference
 at 0.5 and 2 MeV for 0.1 and 1 day. Outputs are
 [`figures/albert_young_profiles.png`](figures/albert_young_profiles.png) and
 [`figures/albert_young_difference.png`](figures/albert_young_difference.png),
-with PDF versions alongside them.
+with PDF versions alongside them. The profile plot uses a logarithmic
+vertical axis for `f`.
 
 There are two `main.cc` files by design:
 
@@ -380,10 +378,10 @@ tools/              data-conversion tools
 docs/               numerical algorithm and design notes
 ```
 
-The legacy command-line driver, HDF5 input/output, xtensor dependency, and old
-`Grid2D`/`Edge`/`NbrInd` representations are not part of the new library. The
-frozen legacy source is retained under `tests/legacy/legacy_source/` only so
-the baseline harness remains reproducible.
+The legacy command-line driver and xtensor dependency are not part of the new
+library. The frozen legacy source is retained under
+`tests/legacy/legacy_source/` only so the baseline harness remains
+reproducible.
 
 ## License and citation
 
