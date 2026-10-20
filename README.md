@@ -142,7 +142,8 @@ There are two `main.cc` files by design:
 
 - [`src/app/main.cc`](src/app/main.cc) is the standalone application with
   configuration and HDF5 I/O;
-- [`src/main.cc`](src/main.cc) is a small, dependency-free library example.
+- [`src/main.cc`](src/main.cc) is the dependency-free library example that
+  solves the uniform-grid test problem.
 
 ## Core library
 
@@ -244,9 +245,17 @@ xtensor-like 2-D containers; the core does not include xtensor.
 
 ### Example driver
 
-[`src/main.cc`](src/main.cc) is a short introduction to the library. It builds
-a small nonuniform grid, runs five steps, and prints center/minimum/maximum
-values.
+[`src/main.cc`](src/main.cc) solves the uniform-grid PPFV test problem from
+the paper:
+
+- 50×50 grid on `[0,1]²`;
+- `G = D11 = D22 = 1`, `D12 = 0.8`;
+- initial `f = exp(-y/0.02) sin(πx/2)`;
+- `f=0` at `x=0`, zero flux at `x=1`, the prescribed lower-energy profile at
+  `y=0`, and `f=0` at `y=1`.
+
+It advances to `t=0.01` with `dt=1e-4` using `std::vector` coefficient/field
+storage and explicit `make_view2d(...)` views.
 
 ```bash
 make example

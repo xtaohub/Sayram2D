@@ -1,0 +1,3 @@
+build/sayram2d/example
+t = 0.002  min f = 8.97324e-22  max f = 0.978067
+t = 0.01  min f = 3.8462e-19  max f = 0.995022
