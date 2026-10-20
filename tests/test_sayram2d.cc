@@ -518,10 +518,14 @@ void test_eigen_support() {
   bc.set_zero_flux(Side::Q2Min);
   bc.set_zero_flux(Side::Q2Max);
 
-  // Direct Eigen coefficients, including the optional inverse-loss matrix.
-  Equation eigen_equation(G, D11, D12, D22, inv_tau, bc);
+  // Direct Eigen coefficients. Inverse loss defaults to zero and is set
+  // separately when needed.
+  Equation eigen_equation(G, D11, D12, D22, bc);
+  check(!eigen_equation.has_loss(), "Eigen inverse loss defaults to zero");
+  check(eigen_equation.inv_tau(0, 0) == 0.0, "default inverse-loss value");
+  eigen_equation.set_loss(inv_tau);
   check(eigen_equation.has_loss() && !eigen_equation.loss_is_constant(),
-        "Eigen inverse-loss matrix");
+        "Eigen inverse-loss matrix set manually");
   check(eigen_equation.G_view().data() == G.data(),
         "Eigen coefficient view must be zero-copy");
   check(eigen_equation.G_view().extent1() == n1 &&
@@ -536,11 +540,6 @@ void test_eigen_support() {
   Equation const_equation(G_const, D11, D12, D22, bc);
   check(const_equation.G_view().data() == G_const.data(),
         "const Eigen coefficient matrices are supported");
-  Equation setter_equation(G, D11, D12, D22, bc);
-  setter_equation.set_loss(inv_tau);
-  check(!setter_equation.loss_is_constant(),
-        "set_loss accepts an Eigen matrix directly");
-
   // Same data through the existing explicit view interface.
   ArrayView2D<const double> Gv(G.data(), n1, n2, 1, n1);
   ArrayView2D<const double> D11v(D11.data(), n1, n2, 1, n1);
@@ -595,7 +594,8 @@ void test_eigen_support() {
       "mismatched Eigen coefficient extents must throw");
 
   // Temporary coefficient matrices must not be accepted. The lvalue-only
-  // constructors make both the four-matrix and five-matrix forms ill-formed.
+  // constructor makes the four-matrix form ill-formed, and there is no
+  // five-matrix Equation constructor.
   static_assert(!std::is_constructible_v<
                     Equation, Eigen::MatrixXd, Eigen::MatrixXd,
                     Eigen::MatrixXd, Eigen::MatrixXd, BoundaryConditions&>,
@@ -604,7 +604,7 @@ void test_eigen_support() {
                     Equation, Eigen::MatrixXd, Eigen::MatrixXd,
                     Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd,
                     BoundaryConditions&>,
-                "Equation must reject temporary Eigen loss matrices");
+                "Equation must not have an inv_tau constructor");
 }
 
 void test_validation_errors() {

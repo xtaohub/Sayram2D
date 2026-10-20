@@ -82,7 +82,10 @@ bc.set_zero_flux(Side::Q1Max);
 bc.set_zero_flux(Side::Q2Min);
 bc.set_zero_flux(Side::Q2Max);
 
-Equation equation(G, D11, D12, D22, inv_tau, bc);
+Equation equation(G, D11, D12, D22, bc);
+// Optional; inverse loss defaults to zero.
+equation.set_loss(inv_tau);
+
 Solver solver(mesh);
 
 Eigen::MatrixXd f_in = Eigen::MatrixXd::Ones(n1, n2);
