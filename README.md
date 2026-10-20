@@ -184,8 +184,8 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 ## Repository layout
 
 ```
-include/            public headers
-src/                library implementation and main.cc example
+src/include/        public headers
+src/                implementation and main.cc example
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs

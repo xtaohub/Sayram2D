@@ -13,7 +13,7 @@ add_library(sayram2d
   src/solver.cpp
 )
 target_include_directories(sayram2d PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 target_include_directories(sayram2d SYSTEM PUBLIC
   ${EIGEN3_INCLUDE_DIR}

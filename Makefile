@@ -2,7 +2,7 @@ CXX := g++-16
 AR ?= ar
 EIGEN_INCLUDE ?= /Users/xtao/local/include
 
-CPPFLAGS ?= -Iinclude -I$(EIGEN_INCLUDE)
+CPPFLAGS ?= -Isrc/include -I$(EIGEN_INCLUDE)
 CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 
 BUILD_DIR ?= build/sayram2d
