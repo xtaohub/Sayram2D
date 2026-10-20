@@ -7,5 +7,5 @@ MPLCONFIGDIR=/Users/xtao/projects/sayram-2d/build/mpl python3 scripts/plot_alber
 		--new output/AlbertYoung1day/AlbertYoung1day_data.h5 --legacy tests/albert_young/legacy_reference_1day.h5 --outdir figures
 max |new - legacy| at 0.1 day (0.5/2 MeV): 3.330669e-16
 max |new - legacy| at 1 day (0.5/2 MeV): 1.276756e-15
-wrote figures/albert_young_profiles.pdf
+wrote figures/albert_young_profiles_log.pdf
 wrote figures/albert_young_difference.pdf

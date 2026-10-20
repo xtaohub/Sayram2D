@@ -283,7 +283,7 @@ day. The resulting HDF5 file is
 The plot compares the app result with the committed legacy 1-day reference
 [`tests/albert_young/legacy_reference_1day.h5`](tests/albert_young/legacy_reference_1day.h5)
 at 0.5 and 2 MeV for 0.1 and 1 day. Outputs are
-[`figures/albert_young_profiles.png`](figures/albert_young_profiles.png) and
+[`figures/albert_young_profiles_log.png`](figures/albert_young_profiles_log.png) and
 [`figures/albert_young_difference.png`](figures/albert_young_difference.png),
 with PDF versions alongside them. The profile plot uses a logarithmic
 vertical axis for `f`.

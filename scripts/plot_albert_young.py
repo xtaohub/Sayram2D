@@ -96,14 +96,15 @@ def main() -> int:
                 labels.extend([f"new, {label}", f"legacy, {label}"])
         ax.set_title(f"{panel}  $E = {energy:g}$ MeV")
         ax.set_xlabel(r"$\alpha_0$ [deg]")
-        ax.set_ylabel(r"$f$" if ax is axes[0] else "")
+        ax.set_ylabel(r"$f$ (log scale)" if ax is axes[0] else "")
         ax.set_yscale("log")
         ax.set_xlim(alpha_new[0], alpha_new[-1])
     fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False,
                bbox_to_anchor=(0.5, -0.02), fontsize="small")
     fig.subplots_adjust(bottom=0.24, wspace=0.35)
-    fig.savefig(args.outdir / "albert_young_profiles.pdf", bbox_inches="tight")
-    fig.savefig(args.outdir / "albert_young_profiles.png", dpi=300,
+    fig.savefig(args.outdir / "albert_young_profiles_log.pdf",
+                bbox_inches="tight")
+    fig.savefig(args.outdir / "albert_young_profiles_log.png", dpi=300,
                 bbox_inches="tight")
 
     fig, axes = plt.subplots(
@@ -138,7 +139,7 @@ def main() -> int:
                    for energy in ENERGIES)
         print(f"max |new - legacy| at {label} (0.5/2 MeV): {diff:.6e}")
 
-    print(f"wrote {args.outdir / 'albert_young_profiles.pdf'}")
+    print(f"wrote {args.outdir / 'albert_young_profiles_log.pdf'}")
     print(f"wrote {args.outdir / 'albert_young_difference.pdf'}")
     return 0
 
