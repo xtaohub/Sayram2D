@@ -101,6 +101,19 @@ The optional `sayram2d/container_adapter.h` provides
 `make_view2d(container)` for xtensor-like 2-D containers with `data()`,
 `dimension()`, `shape(k)`, and `strides()`; the core does not include xtensor.
 
+## Albert–Young case
+
+The real Albert–Young diffusion tables are preprocessed once by
+`tools/convert_albert_young.py` into cell-centered `G`, `D11`, `D12`, and `D22`
+arrays. The C++ case does not interpolate or convert the raw coefficients.
+The default converted data are in
+`data/albert_young/ALBERT_YOUNG_80x80.bin`; see
+`data/albert_young/README.md` for units, formulas, and the binary format.
+
+`make test` runs the actual 80×80 Albert–Young case for 10 steps and compares
+it with the legacy reference output. The observed agreement is
+`max |delta f10| = 1.07e-14`.
+
 ## Ownership and lifetime
 
 - `Mesh` owns its geometry and is immutable after construction. It may be
@@ -147,8 +160,12 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 ```
 include/sayram2d/   public headers
 src/                library implementation
-tests/              unit tests, legacy regression comparison, benchmarks
+tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
+  albert_young/     legacy and new Albert-Young reference outputs
+data/raw/           raw Albert-Young HDF5 input
+data/albert_young/  preprocessed cell-centered G/D data
+tools/              data-conversion tools
 docs/               numerical algorithm and design notes
 ```
 

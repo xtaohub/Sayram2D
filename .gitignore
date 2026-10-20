@@ -17,3 +17,5 @@ docs/*.log
 docs/*.synctex.gz
 docs/texput.*
 docs/.vscode/
+
+tests/albert_young/new_reference.csv
