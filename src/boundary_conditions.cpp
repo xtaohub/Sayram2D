@@ -1,4 +1,4 @@
-#include "sayram2d/boundary_conditions.h"
+#include "boundary_conditions.h"
 
 #include <algorithm>
 #include <cassert>

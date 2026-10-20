@@ -58,11 +58,11 @@ make benchmark-new
 ```cpp
 #include <vector>
 
-#include "sayram2d/array_view2d.h"
-#include "sayram2d/boundary_conditions.h"
-#include "sayram2d/equation.h"
-#include "sayram2d/mesh.h"
-#include "sayram2d/solver.h"
+#include "array_view2d.h"
+#include "boundary_conditions.h"
+#include "equation.h"
+#include "mesh.h"
+#include "solver.h"
 
 using namespace sayram2d;
 
@@ -97,7 +97,7 @@ solver.solve(equation, make_view2d(f, n1, n2),
 auto view = make_view2d(data.data() + 1, n1, n2, n2 * 2, 2);
 ```
 
-The optional `sayram2d/container_adapter.h` provides
+The optional `container_adapter.h` provides
 `make_view2d(container)` for xtensor-like 2-D containers with `data()`,
 `dimension()`, `shape(k)`, and `strides()`; the core does not include xtensor.
 
@@ -116,27 +116,26 @@ it with the legacy reference output. The observed agreement is
 
 ## Example driver
 
-The standalone Albert–Young example is in
-[`examples/albert_young/main.cc`](examples/albert_young/main.cc). It loads the
-preprocessed cell-centered coefficients, runs ten steps, updates `D11`/`D22`
-in place without rebuilding the solver, and writes a CSV field.
+[`src/main.cc`](src/main.cc) is a short, complete introduction to the API. It
+builds a small nonuniform grid, sets constant coefficients and mixed
+Dirichlet/ZeroFlux boundaries, constructs `Equation` and `Solver`, advances
+five steps with `solve(equation, f_in, f_out, dt)`, and prints the center,
+minimum, and maximum values.
 
 ```bash
 make example
-# writes build/albert_young_example.csv
 ```
 
 CMake target:
 
 ```bash
 cmake -S . -B build-cmake
-cmake --build build-cmake --target sayram2d_albert_young
-./build-cmake/sayram2d_albert_young \
-  data/albert_young/ALBERT_YOUNG_80x80.bin build/albert_young_example.csv
+cmake --build build-cmake --target sayram2d_example
+./build-cmake/sayram2d_example
 ```
 
-The former `Grid2D` is merged into `Mesh`; the example constructs `Mesh`
-directly from the q1/q2 edge arrays.
+The former `Grid2D` is merged into `Mesh`; both the example and the library
+construct `Mesh` directly from the q1/q2 edge arrays.
 
 ## Ownership and lifetime
 
@@ -182,9 +181,8 @@ inverse loss to roundoff (maximum observed difference about `2e-15`).
 ## Repository layout
 
 ```
-include/sayram2d/   public headers
-src/                library implementation
-examples/           standalone Albert-Young example driver
+include/            public headers
+src/                library implementation and main.cc example
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs

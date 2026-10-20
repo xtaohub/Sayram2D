@@ -11,10 +11,10 @@
 #include <string>
 #include <vector>
 
-#include "sayram2d/array_view2d.h"
-#include "sayram2d/boundary_conditions.h"
-#include "sayram2d/equation.h"
-#include "sayram2d/mesh.h"
+#include "array_view2d.h"
+#include "boundary_conditions.h"
+#include "equation.h"
+#include "mesh.h"
 
 namespace albert_young {
 

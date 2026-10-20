@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include "sayram2d/array_view2d.h"
-#include "sayram2d/boundary_conditions.h"
+#include "array_view2d.h"
+#include "boundary_conditions.h"
 
 namespace sayram2d {
 

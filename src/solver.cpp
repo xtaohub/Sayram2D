@@ -1,4 +1,4 @@
-#include "sayram2d/solver.h"
+#include "solver.h"
 
 #include <algorithm>
 #include <cassert>

@@ -6,9 +6,9 @@
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
 
-#include "sayram2d/array_view2d.h"
-#include "sayram2d/equation.h"
-#include "sayram2d/mesh.h"
+#include "array_view2d.h"
+#include "equation.h"
+#include "mesh.h"
 
 namespace sayram2d {
 

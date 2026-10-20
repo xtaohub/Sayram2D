@@ -5,7 +5,7 @@
 #include <span>
 #include <vector>
 
-#include "sayram2d/mesh.h"
+#include "mesh.h"
 
 namespace sayram2d {
 

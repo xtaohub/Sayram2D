@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "albert_young_case.h"
-#include "sayram2d/solver.h"
+#include "solver.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {

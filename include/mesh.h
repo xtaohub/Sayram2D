@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "sayram2d/index.h"
+#include "index.h"
 
 namespace sayram2d {
 

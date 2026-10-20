@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "sayram2d/array_view2d.h"
+#include "array_view2d.h"
 
 namespace sayram2d {
 

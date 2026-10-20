@@ -10,7 +10,7 @@ import sys
 
 src = Path("src/solver.cpp").read_text()
 
-needle = '#include "sayram2d/solver.h"\n'
+needle = '#include "solver.h"\n'
 if needle not in src:
     raise SystemExit("solver.cpp: include not found")
 

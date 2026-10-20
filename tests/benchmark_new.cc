@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "reference_case.h"
-#include "sayram2d/solver.h"
+#include "solver.h"
 
 extern double g_new_vertex_sec;
 extern double g_new_assemble_sec;

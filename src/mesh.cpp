@@ -1,4 +1,4 @@
-#include "sayram2d/mesh.h"
+#include "mesh.h"
 
 #include <cassert>
 #include <cmath>

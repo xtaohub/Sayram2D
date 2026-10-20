@@ -24,11 +24,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(sayram2d PRIVATE -Wall -Wextra)
 endif()
 
-add_executable(sayram2d_albert_young
-  examples/albert_young/main.cc
+add_executable(sayram2d_example
+  src/main.cc
 )
-target_link_libraries(sayram2d_albert_young PRIVATE sayram2d)
+target_link_libraries(sayram2d_example PRIVATE sayram2d)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(sayram2d_albert_young PRIVATE -Wall -Wextra)
+  target_compile_options(sayram2d_example PRIVATE -Wall -Wextra)
 endif()

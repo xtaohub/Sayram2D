@@ -9,12 +9,12 @@
 #include <vector>
 
 #include "reference_case.h"
-#include "sayram2d/array_view2d.h"
-#include "sayram2d/boundary_conditions.h"
-#include "sayram2d/container_adapter.h"
-#include "sayram2d/equation.h"
-#include "sayram2d/mesh.h"
-#include "sayram2d/solver.h"
+#include "array_view2d.h"
+#include "boundary_conditions.h"
+#include "container_adapter.h"
+#include "equation.h"
+#include "mesh.h"
+#include "solver.h"
 
 namespace {
 

@@ -20,7 +20,6 @@ AY_BIN := $(BUILD_DIR)/albert_young_reference
 AY_DATA := data/albert_young/ALBERT_YOUNG_80x80.bin
 AY_NEW := tests/albert_young/new_reference.csv
 EXAMPLE_BIN := $(BUILD_DIR)/example
-EXAMPLE_OUT := build/albert_young_example.csv
 
 .PHONY: all lib test reference albert-young example compare benchmark-new clean
 
@@ -64,12 +63,12 @@ albert-young: $(AY_BIN)
 	python3 tests/compare_albert_young.py \
 		tests/albert_young/legacy_reference.csv $(AY_NEW)
 
-$(EXAMPLE_BIN): examples/albert_young/main.cc $(LIB)
+$(EXAMPLE_BIN): src/main.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
 
 example: $(EXAMPLE_BIN)
-	$(EXAMPLE_BIN) $(AY_DATA) $(EXAMPLE_OUT)
+	$(EXAMPLE_BIN)
 
 test: $(TEST_BIN) $(REF_BIN) $(AY_BIN)
 	$(TEST_BIN)
@@ -89,4 +88,4 @@ benchmark-new: $(BENCH_BIN)
 	$(BENCH_BIN) 500 500 3 tests/results/benchmark_new.csv
 
 clean:
-	rm -rf $(BUILD_DIR) $(REF_DIR) $(AY_NEW) $(EXAMPLE_OUT)
+	rm -rf $(BUILD_DIR) $(REF_DIR) $(AY_NEW)

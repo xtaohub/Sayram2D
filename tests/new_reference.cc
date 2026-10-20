@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "reference_case.h"
-#include "sayram2d/solver.h"
+#include "solver.h"
 
 namespace {
 
