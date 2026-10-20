@@ -1,191 +1,169 @@
-# Sayram-2D
+# Sayram2D
 
-**Sayram-2D** is a C++ program within the **Sayram numerical framework**, designed to solve the **two-dimensional radiation belt diffusion equation** using a **positivity-preserving finite-volume method (PPFV)**. The solver supports a full diffusion tensor, is formulated in conservative form, and guarantees non-negativity of the solution without imposing CFL-type time-step restrictions.
+Sayram2D is a lightweight C++20 library for two-dimensional Fokker–Planck
+diffusion on structured, orthogonal, possibly nonuniform rectangular grids.
+It implements the positivity-preserving finite-volume NTPFA discretization
+described in [`docs/sayram2d_algorithm.tex`](docs/sayram2d_algorithm.tex).
 
-While Sayram-2D is specifically developed for modeling **radiation belt dynamics**, the underlying numerical method is general. With minor modifications, the code can also be applied to **other two-dimensional diffusion equations** written in conservative form.
+The redesign separates geometry, coefficients, boundary conditions, and the
+numerical solve. The library core depends only on Eigen; it does not depend on
+HDF5 or xtensor.
 
-Prepare to extend Sayram-2D further so it can be easily used in 3D and 4D codes.
+## Components
 
-> **Note**  
-> This code was previously released under the repository name **`fvm2d`**.  
-> It has been renamed **Sayram-2D** to better reflect its role within the Sayram framework.  
-> The numerical method and scientific results remain unchanged.
+| Component | Responsibility |
+|---|---|
+| `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. No time step or physical coefficients. |
+| `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Supports row-major, column-major, and noncontiguous slices of larger arrays. |
+| `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices, as required by the discretization. |
+| `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss time, and a copy of the boundary configuration. |
+| `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs the documented single linear solve. |
 
----
+## Build
 
-## Overview
+Requirements:
 
-In its current public implementation, Sayram-2D solves the two-dimensional Fokker–Planck equation governing radiation belt electron dynamics. The equation is formulated in **($\alpha_0$, $\log E$)** coordinates, where $\alpha_0$ is the equatorial pitch angle and $E$ is the particle kinetic energy.
+- C++20 compiler
+- Eigen 3.4 or later (header-only)
+- GNU Make and `ar`
 
-The code advances the phase-space density on a structured finite-volume mesh using a full diffusion tensor, including cross-diffusion terms. This allows stable and accurate treatment of pitch-angle diffusion, energy diffusion, and their coupling arising from local wave–particle interactions.
+The default Makefile assumes Eigen is under `/Users/xtao/local/include`.
+Override `EIGEN_INCLUDE` and `CXX` as needed:
 
-Although the present implementation targets radiation belt applications, the numerical infrastructure is sufficiently general that, with slight modifications, it can be adapted to solve **other two-dimensional diffusion problems** written in conservative form.
-
-Key features:
-
-- Positivity-preserving finite-volume discretization  
-- Full diffusion tensor, including cross-diffusion terms  
-- No CFL-type time-step restriction  
-- Extensible to general Fokker–Planck equations in conservative form  
-
----
-
-## Governing Equation
-
-Sayram-2D solves the two-dimensional diffusion equation
-
-$$
-\frac{\partial f}{\partial t} = \sum_{i,j} \frac{1}{G}\frac{\partial}{\partial Q_i}(GD_{Q_iQ_j}\frac{\partial f}{\partial Q_j}),
-$$
-
-where  
-- $f$ is the phase-space density,  
-- $Q_i$ are generalized coordinates,  
-- $D_{Q_i Q_j}$ is the diffusion tensor, and  
-- $G$ is the Jacobian factor.
-
-The numerical scheme is based on the **positivity-preserving finite-volume (PPFV) method** developed by Gao and Wu, which guarantees non-negativity of the solution without imposing CFL constraints on the time step.
-
----
-
-## Code Structure
-
-- **`source/`**  
-  Core numerical implementation: mesh construction, equation assembly, solver, and time integration.
-
-- **`D/`**  
-  Input diffusion coefficients.
-
-- **`output/`**  
-  Simulation outputs (default format: HDF5).
-
-- **`plot/`**  
-  Python scripts for visualization and comparison with reference results.  
-  In particular, `cmp_ay.py` compares the default output with the results of Albert and Young (2005).
-
-- **`p.ini`**  
-  Default configuration file reproducing the test case of Albert and Young (2005, *GRL*).
-
----
-
-## Dependencies
-
-Sayram-2D depends on the following open-source C++ libraries:
-
-- [Eigen](https://eigen.tuxfamily.org) (header-only)  
-- [xtensor](https://github.com/xtensor-stack/xtensor) (header-only)  
-- [xtl](https://github.com/xtensor-stack/xtl) (header-only)  
-- [HDF5](https://github.com/HDFGroup/hdf5)
-
-The first three libraries can be placed directly in the `source/` directory if desired.  
-HDF5 must be installed and linked properly, as it is used for input and output by default.
-
----
-
-## Compilation
-
-### Makefile Configuration
-
-Edit the following section in the `Makefile` according to your system setup:
-
-```makefile
-# -----------------
-CC = clang++
-LOCAL_INCLUDE = /Users/xtao/local/include
-HDF5_INCLUDE = /opt/local/include
-HDF5_LIB = /opt/local/lib
-OPENMP =
-OPT = -O2
-# -----------------
-
+```bash
+make EIGEN_INCLUDE=/path/to/eigen CXX=g++
 ```
 
-Adjust compiler options and library paths as needed.
-
-### Compile
-
-Generate the executable by running:
+Build the static library:
 
 ```bash
 make
 ```
 
-If you encounter compilation issues, clean previous build files and recompile:
+Run the unit and legacy-regression tests:
 
 ```bash
-make clean
-make
+make test
 ```
 
-### Running the Code
-
-Run the code with the default input parameter file p.ini:
+Run the benchmark (the target creates a temporary timing-instrumented copy of
+the solver; the numerical code is unchanged):
 
 ```bash
-./sayram-2d
-```
-The default input parameter file is "p.ini", which deals with the case in the paper by Albert and Young, GRL, 2005. 
-
-To use a custom configuration file (e.g., new.ini), run:
-
-```bash
-./sayram-2d new.ini
+make benchmark-new
 ```
 
-## Boundary Conditions and Extensions
+## Usage
 
-- **Default configuration**  
-  The default setup reproduces the test case of Albert and Young (2005, *GRL*), with the boundary condition
-  $$
-  f(\alpha_0 = \alpha_{0,\text{LC}}) = 0 .
-  $$
+```cpp
+#include <vector>
 
-- **Alternative boundary condition**  
-  An alternative condition,
-  $$
-  \left.\frac{\partial f}{\partial \alpha_0}\right|_{\alpha_0 = 0} = 0 ,
-  $$
-  can be implemented by modifying the corresponding source files. An example implementation is provided in the case **Albert_Young_LC**.
+#include "sayram2d/array_view2d.h"
+#include "sayram2d/boundary_conditions.h"
+#include "sayram2d/equation.h"
+#include "sayram2d/mesh.h"
+#include "sayram2d/solver.h"
 
-  To simulate this case, make the following changes:
+using namespace sayram2d;
 
-  1. In `main.cc`, replace
-     ```cpp
-     #include "Albert_Young.h"
-     ...
+Mesh mesh({0.0, 0.3, 0.7, 1.0}, {0.0, 0.4, 1.0, 1.7});
 
-     Albert_Young eq(paras, m);
-     ```
-     with
-     ```cpp
-     #include "Albert_Young_LC.h"
-     ...
+const std::size_t n1 = mesh.n1();
+const std::size_t n2 = mesh.n2();
+const std::size_t n = n1 * n2;
 
-     Albert_Young_LC eq(paras, m);
-     ```
+std::vector<double> G(n, 1.0), D11(n, 1.0), D12(n, 0.0), D22(n, 1.0);
+std::vector<double> f(n, 1.0), f_new(n, 0.0);
 
-  2. Run the code using
-     ```bash
-     ./sayram-2d p_AlbertYoungLC.ini
-     ```
+BoundaryConditions bc;
+bc.set_dirichlet(Side::Q1Min, 0.5);   // constant value
+bc.set_zero_flux(Side::Q1Max);
+bc.set_zero_flux(Side::Q2Min);
+bc.set_zero_flux(Side::Q2Max);
 
-- **Diffusion coefficients**  
-  The input diffusion coefficients follow those of Albert and Young (2005, *GRL*). All three coefficients have units of \([p^2]/[t]\).
+Equation equation(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
+                  make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
+equation.set_loss(0.0);               // optional; default is zero
 
-- **Additional loss or source term**  
-  An additional loss (or source) term of the form \(f/\tau\) is incorporated directly into the coefficient matrix (with thanks to Mr. Bernhard Haas, GFZ).
+Solver solver(mesh);
+solver.solve(equation, make_view2d(f, n1, n2),
+             make_view2d(f_new, n1, n2), 0.01);
+```
 
-- **Extensions**  
-  Time-dependent diffusion coefficients or boundary conditions can be implemented by extending the **Equation** class and adding new cases under the **Cases** directory.
+`ArrayView2D` can also describe a strided slice:
 
-## Contributing
+```cpp
+// Logical (n1,n2) slice of a row-major (n1,n2,2) array, fixed k=1.
+auto view = make_view2d(data.data() + 1, n1, n2, n2 * 2, 2);
+```
 
-If you have any suggestions, please contact Peng Peng at pp140594 "AT" mail.ustc.edu.cn or Xin Tao at xtao "AT" ustc.edu.cn. 
+The optional `sayram2d/container_adapter.h` provides
+`make_view2d(container)` for xtensor-like 2-D containers with `data()`,
+`dimension()`, `shape(k)`, and `strides()`; the core does not include xtensor.
 
-## License and Citation
+## Ownership and lifetime
+
+- `Mesh` owns its geometry and is immutable after construction. It may be
+  shared read-only by multiple solver instances.
+- `Solver` stores a reference to the mesh; the mesh must outlive the solver.
+- `Equation` and `BoundaryConditions` hold non-owning views/spans. The caller
+  owns the coefficient arrays and the array-valued Dirichlet data, which must
+  remain valid and may be updated in place between solves.
+- `ArrayView2D` never allocates or copies.
+- `Solver::solve(eq, f, f, dt)` is supported for in-place solves; the old field
+  is fully read before the output is written.
+
+## Boundary conditions
+
+- `ZeroFlux` is the default on all four sides.
+- `Dirichlet` values are specified at **boundary vertices**, not cell centers:
+  - `Q1Min`/`Q1Max` require `n2 + 1` values or a scalar constant;
+  - `Q2Min`/`Q2Max` require `n1 + 1` values or a scalar constant.
+- Two Dirichlet sides meeting at a corner must agree; the solver checks this
+  on every solve and throws on conflict. Dirichlet + ZeroFlux uses the
+  Dirichlet value; ZeroFlux + ZeroFlux retains the along-boundary
+  interpolation used by the discretization.
+- Nonzero Neumann flux is not implemented; the only non-Dirichlet condition is
+  homogeneous zero flux.
+
+## Numerical method
+
+The solver preserves the documented NTPFA formulation:
+
+- one linear solve per time step; no nonlinear iteration;
+- each interior face is processed once, with the paired entries
+  `M_KK += A_K`, `M_KL -= A_L`, `M_LL += A_L`, `M_LK -= A_K`;
+- positive inverse loss time is treated implicitly; negative inverse loss time
+  is treated as an explicit source on the right-hand side, as documented;
+- the matrix is generally nonsymmetric and is solved with `Eigen::SparseLU`.
+
+`Lambda = G * D`, cell measures, face orientation, vertex interpolation, and
+boundary-face flux formulas match the pre-redesign implementation. The
+redesigned solver agrees with the saved legacy outputs for zero and positive
+inverse loss to roundoff (maximum observed difference about `2e-15`).
+
+## Repository layout
+
+```
+include/sayram2d/   public headers
+src/                library implementation
+tests/              unit tests, legacy regression comparison, benchmarks
+  legacy/           frozen pre-redesign source and reference outputs
+docs/               numerical algorithm and design notes
+```
+
+The legacy command-line driver, HDF5 input/output, xtensor dependency, and old
+`Grid2D`/`Edge`/`NbrInd` representations are not part of the new library. The
+frozen legacy source is retained under `tests/legacy/legacy_source/` only so
+the baseline harness remains reproducible.
+
+## License and citation
 
 This code is released under the MIT License.
 
 If you use Sayram-2D in your research, please cite:
 
-Peng, P., Tao, X., Peng, Z., Jiang, Y., Gao, Z., Yang, D., et al. (2024). Modeling radiation belt dynamics using a positivity-preserving finite volume method on general meshes. Journal of Geophysical Research: Space Physics, 129, e2024JA032919. https://doi.org/10.1029/2024JA032919
+> Peng, P., Tao, X., Peng, Z., Jiang, Y., Gao, Z., Yang, D., et al. (2024).
+> Modeling radiation belt dynamics using a positivity-preserving finite volume
+> method on general meshes. *Journal of Geophysical Research: Space Physics*,
+> 129, e2024JA032919. https://doi.org/10.1029/2024JA032919

@@ -4,3 +4,16 @@ sayram-2d
 .DS_Store
 source/.DS_Store
 .cache/
+agents/
+
+__pycache__/
+*.pyc
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.log
+docs/*.synctex.gz
+docs/texput.*
+docs/.vscode/

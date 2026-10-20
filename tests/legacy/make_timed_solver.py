@@ -8,7 +8,7 @@ verbatim. The generated file is a build artifact and is not committed.
 from pathlib import Path
 import sys
 
-src = Path("source/Solver.cc").read_text()
+src = Path("tests/legacy/legacy_source/Solver.cc").read_text()
 
 needle = '#include "BCTypes.h"\n'
 if needle not in src:
