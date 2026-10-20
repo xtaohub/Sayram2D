@@ -182,7 +182,8 @@ Build the static library:
 make
 ```
 
-The library itself does not require HDF5.
+The library itself does not require HDF5. `ar` archives the compiled objects
+into `libsayram2d.a`; the example and application link that archive.
 
 ### Embedding example
 
@@ -272,6 +273,8 @@ BoundaryConditions bc;           // shared or per-layer; caller-owned
 Solver solver(mesh);
 
 for (std::size_t k = 0; k < n3; ++k) {
+  // Cheap: stores four views and the BC reference, checks extents, and does
+  // not allocate a matrix or rebuild the sparse pattern.
   Equation equation(layer(G, k), layer(D11, k), layer(D12, k),
                     layer(D22, k), bc);
   solver.solve(equation, layer(f, k), layer(f_next, k), dt);
@@ -280,7 +283,11 @@ for (std::size_t k = 0; k < n3; ++k) {
 
 The view stores the explicit strides; no 3D container is copied or
 interpreted by the library. `Solver` is reusable across sequential layers with
-the same mesh. Use a separate `Solver` instance for concurrent solves.
+the same mesh. Constructing `Equation` inside the loop is nearly free: it only
+stores non-owning views and a boundary reference, checks extents, and does no
+matrix allocation or symbolic factorization. The solve dominates the cost. If
+all layers use identical coefficients, the `Equation` can be hoisted out of the
+loop. Use a separate `Solver` instance for concurrent solves.
 
 ### Example driver
 
@@ -358,8 +365,8 @@ may be shared.
 ## Tests and benchmarks
 
 ```bash
-make test
-make benchmark-new
+make -f Makefile.tests
+make -f Makefile.benchmark
 ```
 
 CMake/CTest:
@@ -370,8 +377,9 @@ cmake --build build-cmake
 ctest --test-dir build-cmake --output-on-failure
 ```
 
-`make test` includes unit tests, legacy numerical comparisons, the
-Albert–Young regression, and standalone-app/HDF5 checks.
+`make -f Makefile.tests` includes unit tests, legacy numerical comparisons,
+the Albert–Young regression, and standalone-app/HDF5 checks. The root
+`Makefile` only builds the library, example, and `sayram2d` app.
 
 ## Albert–Young data
 
@@ -395,6 +403,10 @@ The converter and regression tools remain outside the library.
 ## Repository layout
 
 ```text
+Makefile            library, example, and sayram2d app
+Makefile.tests      unit/regression/application tests
+Makefile.benchmark  timing benchmark
+Makefile.case       one-command Albert-Young case
 src/include/        public headers
 src/                implementation and main.cc example
 src/app/            standalone Albert-Young application

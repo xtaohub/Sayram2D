@@ -1,3 +1,13 @@
+/Applications/Xcode.app/Contents/Developer/usr/bin/make -f Makefile lib
+make[1]: Nothing to be done for `lib'.
+/Applications/Xcode.app/Contents/Developer/usr/bin/make -f Makefile app
+make[1]: Nothing to be done for `app'.
+g++-16 -Isrc/include -I/Users/xtao/local/include -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess tests/test_sayram2d.cc build/sayram2d/libsayram2d.a -o build/sayram2d/test_sayram2d
+g++-16 -Isrc/include -I/Users/xtao/local/include -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess tests/new_reference.cc build/sayram2d/libsayram2d.a -o build/sayram2d/new_reference
+g++-16 -Isrc/include -I/Users/xtao/local/include -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess tests/albert_young_reference.cc build/sayram2d/libsayram2d.a -o build/sayram2d/albert_young_reference
+g++-16 -Isrc/app -I/opt/homebrew/opt/hdf5/include -Isrc/include -I/Users/xtao/local/include -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess tests/test_app.cc \
+		src/app/config.cc src/app/io.cc src/app/albert_young.cc build/sayram2d/libsayram2d.a \
+		-L/opt/homebrew/opt/hdf5/lib -lhdf5 -o build/sayram2d/test_app
 build/sayram2d/test_sayram2d
 [PASS] mesh_geometry
 [PASS] array_views
@@ -43,4 +53,4 @@ wrote "build/app_test_output/AppTest/AppTest_data.h5"
 python3 tests/compare_app_hdf5.py \
 		build/app_test_output/AppTest/AppTest_data.h5 \
 		tests/albert_young/legacy_reference.csv
-[PASS] standalone HDF5: max|df0|=8.882e-16, max|df10|=8.438e-15, max|dalpha|=1.421e-14, max|dlogEN|=4.441e-16
+[PASS] standalone HDF5: max|df0|=8.882e-16, max|df10|=1.066e-14, max|dalpha|=1.421e-14, max|dlogEN|=4.441e-16

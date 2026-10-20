@@ -119,9 +119,9 @@ Albert–Young run saved in `tests/albert_young/legacy_reference.csv`:
 Run it with:
 
 ```bash
-make test
+make -f Makefile.tests
 # or
-make albert-young
+make -f Makefile.tests albert-young
 ```
 
 The committed `tests/albert_young/legacy_reference_1day.h5` is the legacy
