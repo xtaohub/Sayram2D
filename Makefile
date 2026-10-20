@@ -2,7 +2,6 @@
 #
 #   make          build ./sayram2d
 #   make app      same
-#   make app-run  run ./sayram2d with app.ini
 #   make lib      build the static library (requires ar)
 #   make example  build/run the small library example
 #
@@ -34,7 +33,7 @@ APP_SRCS := src/app/main.cc src/app/config.cc src/app/io.cc \
             src/app/albert_young.cc $(CORE_SRCS)
 OBJS := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
-.PHONY: all app app-run lib example clean
+.PHONY: all app lib example clean
 
 all: app
 
@@ -44,9 +43,6 @@ $(APP_BIN): $(APP_SRCS)
 		$(HDF5_LDFLAGS) $(HDF5_LIBS) -o $@
 
 app: $(APP_BIN)
-
-app-run: $(APP_BIN)
-	./$(APP_BIN) app.ini
 
 # Optional static library for external callers.
 $(LIB): $(OBJS)
