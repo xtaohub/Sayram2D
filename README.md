@@ -526,11 +526,12 @@ file-format or configuration dependency. The application owns:
 
 The converter and regression tools remain outside the library.
 
-## 3. Complete 3D example
+## 3. Using Sayram2D in 3D simulations
 
-To make good use of the column-major `ArrayView2D` and mirror the `Array2D`
-interface, define a thin `Array3D` in the 3D host code. `Array3D` belongs to
-`sayram`, not to `sayram2d`:
+We demonstrate how Sayram2D can be used in 3D simulation codes. To make good
+use of the column-major `ArrayView2D` and mirror the `Array2D` interface, define
+a thin `Array3D` in the 3D host code. `Array3D` belongs to `sayram`, not to
+`sayram2d`:
 
 ```cpp
 // In the 3D code; not part of sayram2d.
