@@ -124,7 +124,8 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The committed `tests/albert_young/legacy_reference_1day.h5` is the legacy
+The local `tests/albert_young/legacy_reference_1day.h5` fixture is the legacy
 standalone application output for the same 80×80 case advanced to 1 day
 (`dt = 0.002`, `nsteps = 500`, 11 frames at 0, 0.1, ..., 1.0 day). It is used
-by `python3 scripts/plot_albert_young.py` for the 0.5/2 MeV profile comparison.
+by `python3 scripts/plot_albert_young.py` for the 0.5/2 MeV profile comparison
+when the optional tests directory is present.

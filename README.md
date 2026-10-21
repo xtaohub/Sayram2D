@@ -37,7 +37,7 @@ Requirements:
 - `ar` only when building the static library
 - HDF5 C headers/libraries only for the standalone application
 
-The compiler, Eigen, and HDF5 paths are the four variables at the top of the
+The compiler, Eigen, and HDF5 settings are the variables at the top of the
 [`Makefile`](Makefile). Edit them once for your machine if needed.
 
 Build the standalone app (the default target):
@@ -400,7 +400,7 @@ The command-line argument is an optional INI path. If omitted, the app uses
 options. Relative paths in the INI resolve against the working directory.
 `make` writes the executable to `./sayram2d`, next to `app.ini`.
 
-The compiler, Eigen, and HDF5 paths are the four variables at the top of the
+The compiler, Eigen, and HDF5 settings are the variables at the top of the
 [`Makefile`](Makefile). Edit them once for your machine if needed.
 
 The standalone app requires the HDF5 C headers and library. Their paths are
@@ -621,6 +621,7 @@ OpenMP code with the appropriate compiler and linker flags (for example
 
 ```text
 Makefile            sayram2d app, library, and examples
+LICENSE             MIT license text and copyright notice
 src/*.cc            numerical library implementation
 src/include/        public library headers
 src/app/            generic application configuration and HDF5 I/O
@@ -637,4 +638,4 @@ docs/               numerical algorithm and design notes
 
 Copyright (c) 2026 Xin Tao.
 
-This code is released under the MIT License.
+This code is released under the [MIT License](LICENSE).
