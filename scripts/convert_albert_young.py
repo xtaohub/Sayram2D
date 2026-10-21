@@ -27,7 +27,7 @@ q1 is alpha0 in radians; q2 is log(E), with E in MeV.
 
 Example:
   python3 scripts/convert_albert_young.py \
-    --input data/raw/AlbertYoung_chorus.h5 \
+    --input data/albert_young/AlbertYoung_chorus.h5 \
     --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
     --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \
     --n1 80 --n2 80 --alpha-min 5 --alpha-max 90 --E-min 0.2 --E-max 5
@@ -94,7 +94,7 @@ def interpolate(raw: np.ndarray, x: np.ndarray, y: np.ndarray,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", default="data/raw/AlbertYoung_chorus.h5")
+    parser.add_argument("--input", default="data/albert_young/AlbertYoung_chorus.h5")
     parser.add_argument("--output",
                         default="data/albert_young/ALBERT_YOUNG_80x80.h5",
                         help="HDF5 output file")

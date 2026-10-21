@@ -3,7 +3,7 @@
 The raw input is the Albert–Young chorus diffusion table:
 
 ```
-data/raw/AlbertYoung_chorus.h5
+data/albert_young/AlbertYoung_chorus.h5
   /alpha0  (91,)    degrees
   /E       (49,)    MeV
   /Daa     (91,49)  raw pitch-angle diffusion
@@ -34,7 +34,7 @@ Reproduce both with:
 
 ```bash
 python3 scripts/convert_albert_young.py \
-  --input data/raw/AlbertYoung_chorus.h5 \
+  --input data/albert_young/AlbertYoung_chorus.h5 \
   --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
   --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \
   --n1 80 --n2 80 --alpha-min 5 --alpha-max 90 --E-min 0.2 --E-max 5

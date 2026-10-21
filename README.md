@@ -426,8 +426,7 @@ figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs
-data/raw/           raw Albert-Young HDF5 input
-data/albert_young/  preprocessed cell-centered G/D data
+data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
 ```
 
