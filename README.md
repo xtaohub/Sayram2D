@@ -561,9 +561,8 @@ python3 scripts/plot_albert_young.py
 0, 0.1, ..., 1.0 day. The single result is
 `output/AlbertYoung/AlbertYoung_data.h5`, containing both time slices.
 
-The plot script compares this result with the local legacy 1-day reference
-`tests/albert_young/legacy_reference_1day.h5` (tests are not tracked in Git)
-at 0.5 and 2 MeV for 0.1 and 1 day:
+When a legacy 1-day reference is available, the plot script compares results at
+0.5 and 2 MeV for 0.1 and 1 day:
 
 - [`figures/albert_young_profiles_log.png`](figures/albert_young_profiles_log.png)
   — profiles with a logarithmic `f` axis;
@@ -594,20 +593,6 @@ file-format or configuration dependency. The application owns:
 
 The converter and regression tools remain outside the library.
 
-## Tests
-
-The test suite is maintained locally and intentionally excluded from Git. In a
-checkout that has the local `tests/` directory, use CMake/CTest:
-
-```bash
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-When `tests/` is absent, CMake skips test targets and builds the library, app,
-and examples normally.
-
 ## Repository layout
 
 ```text
@@ -620,9 +605,6 @@ src/examples/albert_young/
                     Albert–Young driver and case model
 scripts/            data conversion and plotting
 figures/            generated comparison figures
-tests/              local-only tests, not tracked in Git
-  legacy/           frozen pre-redesign source and reference outputs
-  albert_young/     legacy and new Albert-Young reference outputs
 data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
 ```
