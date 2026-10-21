@@ -146,12 +146,9 @@ at 0.5 and 2 MeV for 0.1 and 1 day:
 
 PDF versions are alongside them.
 
-There are two `main.cc` files by design:
-
-- [`src/app/main.cc`](src/app/main.cc) is the standalone application with
-  configuration and HDF5 I/O;
-- [`src/main.cc`](src/main.cc) is the dependency-free library example that
-  solves the uniform-grid test problem.
+The default entry point is [`src/main.cc`](src/main.cc), the standalone
+application with configuration and HDF5 I/O. The dependency-free library
+example is separate, at [`src/library/example.cc`](src/library/example.cc).
 
 ## Core library
 
@@ -301,8 +298,8 @@ loop. Use a separate `Solver` instance for concurrent solves.
 
 ### Example driver
 
-[`src/main.cc`](src/main.cc) solves the uniform-grid PPFV test problem from
-the paper:
+[`src/library/example.cc`](src/library/example.cc) solves the uniform-grid
+PPFV test problem from the paper:
 
 - 50×50 grid on `[0,1]²`;
 - `G = D11 = D22 = 1`, `D12 = 0.8`;
@@ -404,9 +401,9 @@ formulas, and the HDF5 layout.
 The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
 file-format or configuration dependency. The application owns:
 
-- `src/app/config.cc` — strict INI parser;
-- `src/app/io.cc` — HDF5 reader/writer using the native C API;
-- `src/app/albert_young.cc` — built-in initial and boundary functions.
+- `src/config.cc` — strict INI parser;
+- `src/io.cc` — HDF5 reader/writer using the native C API;
+- `src/albert_young.cc` — built-in initial and boundary functions.
 
 The converter and regression tools remain outside the library.
 
@@ -417,9 +414,12 @@ Makefile            library, example, and sayram2d app
 Makefile.tests      unit/regression/application tests
 Makefile.benchmark  timing benchmark
 Makefile.case       one-command Albert-Young case
-src/include/        public headers
-src/                implementation and main.cc example
-src/app/            standalone Albert-Young application
+src/main.cc         standalone application entry point
+src/config.*        application configuration
+src/io.*            application HDF5 I/O
+src/albert_young.*  application physics preset
+src/library/        numerical library and its example
+src/library/include public library headers
 config/             example case configurations
 scripts/            data conversion and plotting
 figures/            generated comparison figures

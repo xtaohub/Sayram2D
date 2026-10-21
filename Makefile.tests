@@ -10,8 +10,8 @@ HDF5_INCLUDE ?= /opt/homebrew/opt/hdf5/include
 HDF5_LIBDIR ?= /opt/homebrew/opt/hdf5/lib
 HDF5_LIBS ?= -lhdf5
 
-CPPFLAGS ?= -Isrc/include -I$(EIGEN_INCLUDE)
-APP_CPPFLAGS ?= -Isrc/app -I$(HDF5_INCLUDE)
+CPPFLAGS ?= -Isrc/library/include -I$(EIGEN_INCLUDE)
+APP_CPPFLAGS ?= -Isrc -I$(HDF5_INCLUDE)
 HDF5_LDFLAGS ?= -L$(HDF5_LIBDIR)
 CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 
@@ -54,7 +54,7 @@ $(AY_BIN): tests/albert_young_reference.cc tests/albert_young_case.h FORCE | bui
 $(APP_TEST_BIN): tests/test_app.cc FORCE | build-lib
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(APP_CPPFLAGS) $(CPPFLAGS) $(CXXFLAGS) $< \
-		src/app/config.cc src/app/io.cc src/app/albert_young.cc $(LIB) \
+		src/config.cc src/io.cc src/albert_young.cc $(LIB) \
 		$(HDF5_LDFLAGS) $(HDF5_LIBS) -o $@
 
 test: build-lib build-app $(TEST_BIN) $(REF_BIN) $(AY_BIN) $(APP_TEST_BIN)

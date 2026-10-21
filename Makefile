@@ -18,8 +18,8 @@ HDF5_INCLUDE ?= /opt/homebrew/opt/hdf5/include
 HDF5_LIBDIR ?= /opt/homebrew/opt/hdf5/lib
 HDF5_LIBS ?= -lhdf5
 
-CPPFLAGS := -Isrc/include -I$(EIGEN_INCLUDE)
-APP_CPPFLAGS := -Isrc/app -I$(HDF5_INCLUDE)
+CPPFLAGS := -Isrc/library/include -I$(EIGEN_INCLUDE)
+APP_CPPFLAGS := -Isrc -I$(HDF5_INCLUDE)
 CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
@@ -28,9 +28,9 @@ LIB := $(BUILD_DIR)/libsayram2d.a
 EXAMPLE_BIN := $(BUILD_DIR)/example
 APP_BIN := sayram2d
 
-CORE_SRCS := src/mesh.cpp src/boundary_conditions.cpp src/solver.cpp
-APP_SRCS := src/app/main.cc src/app/config.cc src/app/io.cc \
-            src/app/albert_young.cc $(CORE_SRCS)
+CORE_SRCS := src/library/mesh.cpp src/library/boundary_conditions.cpp src/library/solver.cpp
+APP_SRCS := src/main.cc src/config.cc src/io.cc src/albert_young.cc \
+            $(CORE_SRCS)
 OBJS := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
 .PHONY: all app lib example clean
@@ -50,12 +50,12 @@ $(LIB): $(OBJS)
 	$(AR) rcs $@ $^
 
 $(BUILD_DIR)/%.o: src/%.cpp
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 lib: $(LIB)
 
-$(EXAMPLE_BIN): src/main.cc $(LIB)
+$(EXAMPLE_BIN): src/library/example.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
 
