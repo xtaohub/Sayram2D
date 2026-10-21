@@ -146,7 +146,7 @@ PDF versions are alongside them.
 
 The default entry point is [`src/main.cc`](src/main.cc), the standalone
 application with configuration and HDF5 I/O. The dependency-free library
-example is separate, at [`src/library/example.cc`](src/library/example.cc).
+example is separate, at [`src/examples/example1.cc`](src/examples/example1.cc).
 
 ## Core library
 
@@ -212,11 +212,14 @@ make lib
 ```
 
 The library itself does not require HDF5. `make lib` uses `ar` to archive the
-compiled objects into `libsayram2d.a`; the example links that archive. The
+compiled objects into `libsayram2d.a`; the examples link that archive. The
 default `make` builds the app directly from source, so it does not require
 `ar`.
 
 ### Embedding example
+
+A complete, compilable version is
+[`src/examples/example_eigen.cc`](src/examples/example_eigen.cc).
 
 ```cpp
 #include <Eigen/Dense>
@@ -252,6 +255,12 @@ Solver solver(mesh);
 Eigen::MatrixXd f_in = Eigen::MatrixXd::Ones(n1, n2);
 Eigen::MatrixXd f_out(n1, n2);
 solver.solve(equation, f_in, f_out, 0.01);
+```
+
+Build and run it with:
+
+```bash
+make example_eigen
 ```
 
 `Eigen::MatrixXd` is accepted directly, zero-copy, in column-major layout.
@@ -331,7 +340,7 @@ loop. Use a separate `Solver` instance for concurrent solves.
 
 ### Example driver
 
-[`src/library/example.cc`](src/library/example.cc) solves the uniform-grid
+[`src/examples/example1.cc`](src/examples/example1.cc) solves the uniform-grid
 PPFV test problem from the paper:
 
 - 50×50 grid on `[0,1]²`;
@@ -344,9 +353,18 @@ It advances to `t=0.01` with `dt=1e-4` using `std::vector` coefficient/field
 storage and explicit `make_view2d(...)` views.
 
 ```bash
+make example1
+```
+
+It builds and runs the example, printing the final minimum and maximum values.
+The executable is also available at `build/sayram2d/example1`.
+
+With CMake:
+
+```bash
 cmake -S . -B build
-cmake --build build --target sayram2d_example
-./build/sayram2d_example
+cmake --build build --target sayram2d_example1
+./build/sayram2d_example1
 ```
 
 ### Ownership and lifetime
@@ -443,8 +461,9 @@ src/main.cc         standalone application entry point
 src/config.*        application configuration
 src/io.*            application HDF5 I/O
 src/albert_young.*  application physics preset
-src/library/        numerical library and its example
+src/library/        numerical library
 src/library/include public library headers
+src/examples/       runnable library examples
 scripts/            data conversion and plotting
 figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
