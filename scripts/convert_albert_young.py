@@ -8,11 +8,9 @@ case code can consume G, D11, D12, D22 directly.
 
 The primary output is a self-describing HDF5 file:
 
-  /alpha0_edges    float64[n1+1]   radians
-  /alpha0_centers  float64[n1]     radians
-  /logE_edges      float64[n2+1]   log(E/MeV)
-  /logE_centers    float64[n2]     log(E/MeV)
-  /G               float64[n1,n2]  row-major, index i*n2+j
+  /q1_edges        float64[n1+1]   alpha0 in radians
+  /q2_edges        float64[n2+1]   log(E/MeV)
+  /G               float64[n1,n2]  cell-centered, row-major, index i*n2+j
   /D11             float64[n1,n2]
   /D12             float64[n1,n2]
   /D22             float64[n1,n2]
@@ -164,13 +162,12 @@ def main() -> None:
     with h5py.File(output, "w") as handle:
         handle.attrs["format_version"] = 1
         handle.attrs["index_order"] = "row-major i*n2+j"
-        handle.attrs["alpha0_units"] = "rad"
-        handle.attrs["logE_units"] = "log(E/MeV)"
+        handle.attrs["q1_units"] = "rad"
+        handle.attrs["q2_units"] = "log(E/MeV)"
+        handle.attrs["coefficient_location"] = "cell centers"
         for name, array in (
-            ("alpha0_edges", q1_edges),
-            ("alpha0_centers", q1_centers),
-            ("logE_edges", q2_edges),
-            ("logE_centers", q2_centers),
+            ("q1_edges", q1_edges),
+            ("q2_edges", q2_edges),
             ("G", G),
             ("D11", D11),
             ("D12", D12),

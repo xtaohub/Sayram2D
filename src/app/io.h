@@ -19,8 +19,6 @@ struct InputData {
   std::size_t n2 = 0;
   std::vector<double> q1_edges;
   std::vector<double> q2_edges;
-  std::vector<double> q1_centers;
-  std::vector<double> q2_centers;
   Eigen::MatrixXd G;
   Eigen::MatrixXd D11;
   Eigen::MatrixXd D12;

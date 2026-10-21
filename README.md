@@ -547,15 +547,18 @@ invalid frame counts. Diagnostics include the configuration file and line.
 `data_file` is a self-describing HDF5 file:
 
 ```text
-/alpha0_edges    (n1+1)  alpha0 in radians
-/alpha0_centers  (n1)    alpha0 in radians
-/logE_edges      (n2+1)  log(E/MeV)
-/logE_centers    (n2)    log(E/MeV)
+/q1_edges        (n1+1)  q1 = alpha0 in radians
+/q2_edges        (n2+1)  q2 = log(E/MeV)
 /G               (n1,n2)  cell-centered
-/D11             (n1,n2)
-/D12             (n1,n2)
-/D22             (n1,n2)
+/D11             (n1,n2)  cell-centered
+/D12             (n1,n2)  cell-centered
+/D22             (n1,n2)  cell-centered
 ```
+
+`G`, `D11`, `D12`, and `D22` are defined at cell centers and have shape
+`(n1, n2)`. They are not vertex-centered arrays and must not have shape
+`(n1+1, n2+1)`. Cell-center coordinates are derived from the edge arrays by the
+`Mesh` constructor.
 
 Root attributes document `format_version`, row-major `i*n2+j` ordering, and
 the coordinate units. The provided file is

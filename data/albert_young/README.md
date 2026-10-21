@@ -43,14 +43,12 @@ python3 scripts/convert_albert_young.py \
 ### HDF5 input layout
 
 ```text
-/alpha0_edges    float64[n1+1]   alpha0 in radians
-/alpha0_centers  float64[n1]     alpha0 in radians
-/logE_edges      float64[n2+1]   log(E/MeV)
-/logE_centers    float64[n2]     log(E/MeV)
+/q1_edges        float64[n1+1]   q1 = alpha0 in radians
+/q2_edges        float64[n2+1]   q2 = log(E/MeV)
 /G               float64[n1,n2]  cell-centered
-/D11             float64[n1,n2]
-/D12             float64[n1,n2]
-/D22             float64[n1,n2]
+/D11             float64[n1,n2]  cell-centered
+/D12             float64[n1,n2]  cell-centered
+/D22             float64[n1,n2]  cell-centered
 ```
 
 Root attributes:
@@ -58,12 +56,14 @@ Root attributes:
 ```text
 format_version = 1
 index_order = "row-major i*n2+j"
-alpha0_units = "rad"
-logE_units = "log(E/MeV)"
+q1_units = "rad"
+q2_units = "log(E/MeV)"
+coefficient_location = "cell centers"
 ```
 
-`G[i,j]`, `D11[i,j]`, etc. correspond to `alpha0_centers[i]` and
-`logE_centers[j]`. The application reads the HDF5 datasets explicitly by name;
+`G[i,j]`, `D11[i,j]`, etc. are defined at cell centers and have shape
+`(n1, n2)`. They are not vertex-centered arrays and must not have shape
+`(n1+1, n2+1)`. The application reads the HDF5 datasets explicitly by name;
 the on-disk order is documented rather than inferred from Eigen layout.
 
 ### Legacy regression binary

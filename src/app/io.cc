@@ -183,8 +183,8 @@ InputData load_input(const std::filesystem::path& path) {
       "open " + path.string()));
 
   InputData data;
-  data.q1_edges = read_vector(file.id(), "alpha0_edges");
-  data.q2_edges = read_vector(file.id(), "logE_edges");
+  data.q1_edges = read_vector(file.id(), "q1_edges");
+  data.q2_edges = read_vector(file.id(), "q2_edges");
   if (data.q1_edges.size() < 2 || data.q2_edges.size() < 2) {
     throw std::runtime_error("HDF5: coordinate edge arrays are too short");
   }
@@ -192,13 +192,6 @@ InputData load_input(const std::filesystem::path& path) {
   data.n2 = data.q2_edges.size() - 1;
   if (data.n1 > std::numeric_limits<std::size_t>::max() / data.n2) {
     throw std::runtime_error("HDF5: n1*n2 overflows size_t");
-  }
-
-  data.q1_centers = read_vector(file.id(), "alpha0_centers");
-  data.q2_centers = read_vector(file.id(), "logE_centers");
-  if (data.q1_centers.size() != data.n1 ||
-      data.q2_centers.size() != data.n2) {
-    throw std::runtime_error("HDF5: coordinate center arrays have wrong shape");
   }
 
   data.G = read_matrix(file.id(), "G", data.n1, data.n2);
