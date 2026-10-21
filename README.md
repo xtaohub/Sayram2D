@@ -9,6 +9,16 @@ The project is organized around a reusable core library and a set of examples.
 The core library depends only on Eigen. The standalone Albert–Young
 application is one example; HDF5 is used by that example, not by the library.
 
+This version was designed and reviewed by Xin Tao and implemented by DeepSeek
+V4.1 Flash using DeepSeek Harness.
+
+If you use Sayram2D in your research, please cite:
+
+> Peng, P., Tao, X., Peng, Z., Jiang, Y., Gao, Z., Yang, D., et al. (2024).
+> Modeling radiation belt dynamics using a positivity-preserving finite volume
+> method on general meshes. *Journal of Geophysical Research: Space Physics*,
+> 129, e2024JA032919. https://doi.org/10.1029/2024JA032919
+
 ## 1. Core library
 
 ### Build the library
@@ -288,7 +298,7 @@ the configuration and I/O patterns. The methods
 names and units; the Albert–Young driver uses `alpha0`, `logE`, `t`, and
 `PSD`.
 
-### Example 1: time-independent PPFV
+### Example 1: a time-independent problem
 
 [`src/examples/example1.cc`](src/examples/example1.cc) solves the uniform-grid
 PPFV test problem from the paper:
@@ -617,13 +627,6 @@ data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
 ```
 
-## License and citation
+## License
 
 This code is released under the MIT License.
-
-If you use Sayram-2D in your research, please cite:
-
-> Peng, P., Tao, X., Peng, Z., Jiang, Y., Gao, Z., Yang, D., et al. (2024).
-> Modeling radiation belt dynamics using a positivity-preserving finite volume
-> method on general meshes. *Journal of Geophysical Research: Space Physics*,
-> 129, e2024JA032919. https://doi.org/10.1029/2024JA032919
