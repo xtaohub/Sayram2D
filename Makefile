@@ -28,10 +28,10 @@ LIB := $(BUILD_DIR)/libsayram2d.a
 EXAMPLE_BIN := $(BUILD_DIR)/example
 APP_BIN := sayram2d
 
-CORE_SRCS := src/library/mesh.cpp src/library/boundary_conditions.cpp src/library/solver.cpp
+CORE_SRCS := src/library/mesh.cc src/library/boundary_conditions.cc src/library/solver.cc
 APP_SRCS := src/main.cc src/config.cc src/io.cc src/albert_young.cc \
             $(CORE_SRCS)
-OBJS := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(CORE_SRCS))
+OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
 .PHONY: all app lib example clean
 
@@ -49,7 +49,7 @@ $(LIB): $(OBJS)
 	@mkdir -p $(BUILD_DIR)
 	$(AR) rcs $@ $^
 
-$(BUILD_DIR)/%.o: src/%.cpp
+$(BUILD_DIR)/%.o: src/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 

@@ -22,9 +22,9 @@ if(NOT TARGET Eigen3::Eigen)
 endif()
 
 add_library(sayram2d
-  src/library/mesh.cpp
-  src/library/boundary_conditions.cpp
-  src/library/solver.cpp
+  src/library/mesh.cc
+  src/library/boundary_conditions.cc
+  src/library/solver.cc
 )
 target_include_directories(sayram2d PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/library/include

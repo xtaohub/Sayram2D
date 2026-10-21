@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a timing-instrumented copy of src/library/solver.cpp for benchmarking.
+"""Create a timing-instrumented copy of src/library/solver.cc for benchmarking.
 
 Only std::chrono instrumentation is inserted; numerical code is copied
 verbatim. The generated file is a build artifact and is not committed.
@@ -8,11 +8,11 @@ verbatim. The generated file is a build artifact and is not committed.
 from pathlib import Path
 import sys
 
-src = Path("src/library/solver.cpp").read_text()
+src = Path("src/library/solver.cc").read_text()
 
 needle = '#include "solver.h"\n'
 if needle not in src:
-    raise SystemExit("solver.cpp: include not found")
+    raise SystemExit("solver.cc: include not found")
 
 instrumentation = r'''
 #include <chrono>
@@ -92,10 +92,10 @@ new = """  const double t_vertex0 = new_now_sec();
 """
 
 if old not in src:
-    raise SystemExit("solver.cpp: solve block not found")
+    raise SystemExit("solver.cc: solve block not found")
 src = src.replace(old, new, 1)
 
-out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/tmp/sayram-new-timed/Solver.cpp")
+out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/tmp/sayram-new-timed/Solver.cc")
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(src)
 print(out)
