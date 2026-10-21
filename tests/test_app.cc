@@ -7,9 +7,8 @@
 #include <string>
 #include <vector>
 
-#include <Eigen/Dense>
-
 #include "albert_young.h"
+#include "array2d.h"
 #include "config.h"
 #include "io.h"
 
@@ -118,8 +117,8 @@ void test_input_loader() {
   check(data.n1 == 80 && data.n2 == 80, "input dimensions");
   check(data.q1_edges.size() == 81 && data.q2_edges.size() == 81,
         "input edge lengths");
-  check(data.G.rows() == 80 && data.G.cols() == 80 &&
-            data.D22.rows() == 80 && data.D22.cols() == 80,
+  check(data.G.extent1() == 80 && data.G.extent2() == 80 &&
+            data.D22.extent1() == 80 && data.D22.extent2() == 80,
         "input matrix dimensions");
   check(data.G(0, 0) == data.G(0, 0), "input coefficients are finite");
 
@@ -168,8 +167,9 @@ void test_albert_young_setup() {
         "Q2Min corner value follows the legacy prescription");
   model.bc().validate(mesh);
 
-  const Eigen::MatrixXd initial = model.initial_field();
-  check(initial.rows() == 80 && initial.cols() == 80, "initial field shape");
+  const Array2D<double> initial = model.initial_field();
+  check(initial.extent1() == 80 && initial.extent2() == 80,
+        "initial field shape");
   check(near(initial(0, 0),
              albert_young_initial(mesh.q1_center(0), mesh.q2_center(0))),
         "initial field formula");

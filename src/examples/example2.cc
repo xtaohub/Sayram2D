@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "array_view2d.h"
+#include "array2d.h"
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
@@ -36,15 +36,12 @@ int main() {
 
   const std::size_t n1 = mesh.n1();
   const std::size_t n2 = mesh.n2();
-  const std::size_t cells = n1 * n2;
-  const Shape2 shape{n1, n2};
-
-  std::vector<double> G(cells, 1.0);
-  std::vector<double> D11(cells);
-  std::vector<double> D12(cells);
-  std::vector<double> D22(cells);
-  std::vector<double> f_in(cells, 1.0);
-  std::vector<double> f_out(cells, 0.0);
+  Array2D<double> G(n1, n2, 1.0);
+  Array2D<double> D11(n1, n2);
+  Array2D<double> D12(n1, n2);
+  Array2D<double> D22(n1, n2);
+  Array2D<double> f_in(n1, n2, 1.0);
+  Array2D<double> f_out(n1, n2, 0.0);
 
   BoundaryConditions bc;
   bc.set_dirichlet(Side::Q1Min, 0.5);
@@ -52,21 +49,20 @@ int main() {
   bc.set_zero_flux(Side::Q2Min);
   bc.set_zero_flux(Side::Q2Max);
 
-  Equation equation(make_view2d(G, shape), make_view2d(D11, shape),
-                    make_view2d(D12, shape), make_view2d(D22, shape), bc);
+  Equation equation(G.view(), D11.view(), D12.view(), D22.view(), bc);
   Solver solver(mesh);
 
   auto update_parameters = [&](double time) {
     const double decay = std::exp(-time / tau);
-    std::fill(D11.begin(), D11.end(), decay);
-    std::fill(D12.begin(), D12.end(), 0.8 * decay);
-    std::fill(D22.begin(), D22.end(), decay);
+    D11.fill(decay);
+    D12.fill(0.8 * decay);
+    D22.fill(decay);
     bc.set_dirichlet(Side::Q1Min, 0.5 * decay);
   };
 
   auto print_state = [&](double time) {
     const auto minmax = std::minmax_element(f_in.begin(), f_in.end());
-    std::cout << "t=" << time << " D11=" << D11[0]
+    std::cout << "t=" << time << " D11=" << D11(0, 0)
               << " g_D=" << bc.value(Side::Q1Min, 0)
               << " min f=" << *minmax.first
               << " max f=" << *minmax.second << "\n";
@@ -80,8 +76,7 @@ int main() {
     // The Equation sees these updates because it holds non-owning views and a
     // reference to bc.
     update_parameters(time);
-    solver.solve(equation, make_view2d(f_in, shape),
-                 make_view2d(f_out, shape), dt);
+    solver.solve(equation, f_in.view(), f_out.view(), dt);
     std::swap(f_in, f_out);
     if (step == steps / 2 || step == steps) {
       print_state(time);

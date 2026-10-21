@@ -45,20 +45,14 @@ add_executable(sayram2d_example1
 )
 target_link_libraries(sayram2d_example1 PRIVATE sayram2d)
 
-add_executable(sayram2d_example_eigen
-  src/examples/example_eigen.cc
+add_executable(sayram2d_example2
+  src/examples/example2.cc
 )
-target_link_libraries(sayram2d_example_eigen PRIVATE sayram2d)
-
-add_executable(sayram2d_example3
-  src/examples/example3.cc
-)
-target_link_libraries(sayram2d_example3 PRIVATE sayram2d)
+target_link_libraries(sayram2d_example2 PRIVATE sayram2d)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(sayram2d_example1 PRIVATE -Wall -Wextra)
-  target_compile_options(sayram2d_example_eigen PRIVATE -Wall -Wextra)
-  target_compile_options(sayram2d_example3 PRIVATE -Wall -Wextra)
+  target_compile_options(sayram2d_example2 PRIVATE -Wall -Wextra)
 endif()
 
 option(SAYRAM2D_BUILD_APP "Build the standalone HDF5 application" ON)

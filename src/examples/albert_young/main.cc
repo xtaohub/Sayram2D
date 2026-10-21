@@ -13,9 +13,8 @@
 #include <utility>
 #include <vector>
 
-#include <Eigen/Dense>
-
 #include "albert_young.h"
+#include "array2d.h"
 #include "config.h"
 #include "equation.h"
 #include "io.h"
@@ -44,7 +43,8 @@ int main(int argc, char** argv) {
     }
 
     sayram2d::albert_young::AlbertYoungModel model(mesh);
-    sayram2d::Equation equation(input.G, input.D11, input.D12, input.D22,
+    sayram2d::Equation equation(input.G.view(), input.D11.view(),
+                                input.D12.view(), input.D22.view(),
                                 model.bc());
     sayram2d::Solver solver(mesh);
 
@@ -77,17 +77,17 @@ int main(int argc, char** argv) {
     output.write_vector(log_e, "logE", "log(MeV)");
     output.write_vector(times, "t", "day");
 
-    Eigen::MatrixXd f_in = model.initial_field();
-    Eigen::MatrixXd f_out(static_cast<Eigen::Index>(n1),
-                          static_cast<Eigen::Index>(n2));
-    output.write_field(0, f_in);
+    sayram2d::Array2D<double> f_in = model.initial_field();
+    sayram2d::Array2D<double> f_out(n1, n2);
+    output.write_field(0, f_in.view());
 
     int saved_frame = 1;
     for (int step = 1; step <= config.nsteps; ++step) {
-      solver.solve(equation, f_in, f_out, config.dt);
+      solver.solve(equation, f_in.view(), f_out.view(), config.dt);
       std::swap(f_in, f_out);
       if (step % interval == 0) {
-        output.write_field(static_cast<std::size_t>(saved_frame), f_in);
+        output.write_field(static_cast<std::size_t>(saved_frame),
+                           f_in.view());
         ++saved_frame;
       }
     }

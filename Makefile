@@ -3,9 +3,8 @@
 #   make          build ./sayram2d
 #   make app      same
 #   make lib      build the static library (requires ar)
-#   make example1       build and run the vector-based example
-#   make example_eigen  build and run the Eigen embedding example
-#   make example3       build and run the time-dependent example
+#   make example1  build and run the time-independent paper problem
+#   make example2  build and run the time-dependent example
 #
 # Edit the four paths below if your installation is in a different place.
 # Tests are configured with CMake/CTest.
@@ -27,8 +26,7 @@ BUILD_DIR ?= build/sayram2d
 LIB := $(BUILD_DIR)/libsayram2d.a
 APP_BIN := sayram2d
 EXAMPLE1_BIN := $(BUILD_DIR)/example1
-EXAMPLE_EIGEN_BIN := $(BUILD_DIR)/example_eigen
-EXAMPLE3_BIN := $(BUILD_DIR)/example3
+EXAMPLE2_BIN := $(BUILD_DIR)/example2
 
 CORE_SRCS := src/mesh.cc src/boundary_conditions.cc src/solver.cc
 APP_SRCS := src/examples/albert_young/main.cc \
@@ -36,7 +34,7 @@ APP_SRCS := src/examples/albert_young/main.cc \
             src/examples/albert_young/albert_young.cc $(CORE_SRCS)
 OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
-.PHONY: all app lib example1 example_eigen example3 clean
+.PHONY: all app lib example1 example2 clean
 
 all: app
 
@@ -65,19 +63,12 @@ $(EXAMPLE1_BIN): src/examples/example1.cc $(LIB)
 example1: $(EXAMPLE1_BIN)
 	$(EXAMPLE1_BIN)
 
-$(EXAMPLE_EIGEN_BIN): src/examples/example_eigen.cc $(LIB)
+$(EXAMPLE2_BIN): src/examples/example2.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
 
-example_eigen: $(EXAMPLE_EIGEN_BIN)
-	$(EXAMPLE_EIGEN_BIN)
-
-$(EXAMPLE3_BIN): src/examples/example3.cc $(LIB)
-	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
-
-example3: $(EXAMPLE3_BIN)
-	$(EXAMPLE3_BIN)
+example2: $(EXAMPLE2_BIN)
+	$(EXAMPLE2_BIN)
 
 clean:
 	rm -rf $(BUILD_DIR) $(APP_BIN)

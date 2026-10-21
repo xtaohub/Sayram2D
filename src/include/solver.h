@@ -7,7 +7,6 @@
 #include <Eigen/SparseLU>
 
 #include "array_view2d.h"
-#include "eigen_support.h"
 #include "equation.h"
 #include "mesh.h"
 
@@ -19,13 +18,6 @@ class Solver {
 
   void solve(const Equation& equation, ArrayView2D<const double> f_in,
              ArrayView2D<double> f_out, double dt);
-
-  // Direct zero-copy overload for ordinary Eigen::MatrixXd fields. `f_out`
-  // may be the same matrix as `f_in` for an in-place solve.
-  void solve(const Equation& equation, const Eigen::MatrixXd& f_in,
-             Eigen::MatrixXd& f_out, double dt) {
-    solve(equation, make_view2d(f_in), make_view2d(f_out), dt);
-  }
 
  private:
   struct Mat2 {

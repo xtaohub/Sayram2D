@@ -136,10 +136,10 @@ class CaseData {
     }
 
     equation_ = std::make_unique<sayram2d::Equation>(
-        sayram2d::make_view2d(G_, n1, n2),
-        sayram2d::make_view2d(D11_, n1, n2),
-        sayram2d::make_view2d(D12_, n1, n2),
-        sayram2d::make_view2d(D22_, n1, n2), bc_);
+        sayram2d::make_view2d(G_.data(), n1, n2),
+        sayram2d::make_view2d(D11_.data(), n1, n2),
+        sayram2d::make_view2d(D12_.data(), n1, n2),
+        sayram2d::make_view2d(D22_.data(), n1, n2), bc_);
     equation_->set_loss(config_.inv_tau);
   }
 
@@ -149,10 +149,10 @@ class CaseData {
   CaseData& operator=(CaseData&&) = delete;
 
   sayram2d::ArrayView2D<double> f_view() {
-    return sayram2d::make_view2d(f_, mesh_.n1(), mesh_.n2());
+    return sayram2d::make_view2d(f_.data(), mesh_.n1(), mesh_.n2());
   }
   sayram2d::ArrayView2D<const double> f_const_view() const {
-    return sayram2d::make_view2d(f_, mesh_.n1(), mesh_.n2());
+    return sayram2d::make_view2d(f_.data(), mesh_.n1(), mesh_.n2());
   }
   sayram2d::Equation& equation() { return *equation_; }
   const sayram2d::Equation& equation() const { return *equation_; }

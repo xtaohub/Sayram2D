@@ -2,8 +2,7 @@
 
 #include <vector>
 
-#include <Eigen/Dense>
-
+#include "array2d.h"
 #include "boundary_conditions.h"
 #include "mesh.h"
 
@@ -25,7 +24,7 @@ class AlbertYoungModel {
   const std::vector<double>& q2_min_values() const noexcept {
     return q2_min_values_;
   }
-  Eigen::MatrixXd initial_field() const;
+  Array2D<double> initial_field() const;
 
  private:
   const Mesh& mesh_;

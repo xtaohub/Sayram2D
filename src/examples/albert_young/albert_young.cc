@@ -36,12 +36,11 @@ AlbertYoungModel::AlbertYoungModel(const Mesh& mesh)
   bc_.set_dirichlet(Side::Q2Max, 0.0);
 }
 
-Eigen::MatrixXd AlbertYoungModel::initial_field() const {
-  Eigen::MatrixXd field(static_cast<Eigen::Index>(mesh_.n1()),
-                        static_cast<Eigen::Index>(mesh_.n2()));
+Array2D<double> AlbertYoungModel::initial_field() const {
+  Array2D<double> field(mesh_.n1(), mesh_.n2());
   for (std::size_t i = 0; i < mesh_.n1(); ++i) {
     for (std::size_t j = 0; j < mesh_.n2(); ++j) {
-      field(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
+      field(i, j) =
           albert_young_initial(mesh_.q1_center(i), mesh_.q2_center(j));
     }
   }

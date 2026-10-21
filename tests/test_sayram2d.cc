@@ -12,10 +12,9 @@
 #include <type_traits>
 #include <vector>
 
-#include <Eigen/Dense>
-
 #include "albert_young_case.h"
 #include "reference_case.h"
+#include "array2d.h"
 #include "array_view2d.h"
 #include "boundary_conditions.h"
 #include "container_adapter.h"
@@ -57,12 +56,6 @@ double max_abs_diff(const std::vector<double>& a,
     result = std::max(result, std::abs(a[k] - b[k]));
   }
   return result;
-}
-
-double max_abs_diff(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b) {
-  check(a.rows() == b.rows() && a.cols() == b.cols(),
-        "max_abs_diff: Eigen size mismatch");
-  return (a - b).cwiseAbs().maxCoeff();
 }
 
 void test_mesh_geometry() {
@@ -141,36 +134,27 @@ struct CustomMatrix2D {
 };
 
 void test_array_views() {
-  std::vector<double> values(12);
-  for (std::size_t k = 0; k < values.size(); ++k) values[k] = double(k);
+  Array2D<double> owned(3, 4);
+  for (std::size_t i = 0; i < owned.extent1(); ++i) {
+    for (std::size_t j = 0; j < owned.extent2(); ++j) {
+      owned(i, j) = static_cast<double>(i * owned.extent2() + j);
+    }
+  }
 
-  const auto row = make_view2d(values, 3, 4);
+  const auto row = owned.view();
   check(row.extent1() == 3 && row.extent2() == 4, "view extents");
   check(row.stride1() == 4 && row.stride2() == 1, "row-major strides");
   check(row(1, 2) == 6.0, "row-major access");
   check(row.is_contiguous(), "row-major contiguous");
 
-  ArrayView2D<const double> const_row = row;
-  check(const_row(2, 3) == 11.0, "mutable-to-const conversion");
-  const std::vector<double>& const_values = values;
-  const auto const_vector_view = make_view2d(const_values, 3, 4);
-  check(const_vector_view(2, 3) == 11.0, "const vector view");
+  const Array2D<double>& const_owned = owned;
+  const auto const_row = const_owned.view();
+  check(const_row(2, 3) == 11.0, "const Array2D view");
+
+  std::vector<double> values(12);
+  for (std::size_t k = 0; k < values.size(); ++k) values[k] = double(k);
 
   const Shape2 shape{3, 4};
-  const auto shaped = make_view2d(values, shape);
-  check(shaped.extent1() == 3 && shaped.extent2() == 4,
-        "shape-based view extents");
-  check(shaped(1, 2) == 6.0, "shape-based row-major access");
-  const auto shaped_const = make_view2d(const_values, shape);
-  check(shaped_const(2, 3) == 11.0, "shape-based const vector view");
-  const auto column_vector =
-      make_view2d(values, shape, ArrayLayout::column_major);
-  check(column_vector.stride1() == 1 && column_vector.stride2() == 3,
-        "column-major vector strides");
-  check(column_vector(1, 2) == values[1 + 2 * 3],
-        "column-major vector access");
-  check(column_vector.is_contiguous(), "column-major vector contiguous");
-
   const auto strided_view =
       make_view2d(values.data(), shape, Strides2{4, 1});
   check(strided_view(1, 2) == 6.0, "shape/stride pointer view");
@@ -202,11 +186,6 @@ void test_array_views() {
   const CustomMatrix2D& const_custom = custom;
   const auto const_custom_view = make_view2d(const_custom);
   check(const_custom_view(2, 1) == 9.0, "const container adapter access");
-
-  expect_throw([] {
-    std::vector<double> wrong(3);
-    (void)make_view2d(wrong, 2, 2);
-  }, "wrong vector size must throw");
 }
 
 void test_boundary_conditions() {
@@ -271,7 +250,7 @@ void test_solve_and_inplace() {
   std::vector<double> out_of_place(n, 0.0);
 
   solver.solve(data.equation(), data.f_const_view(),
-               make_view2d(out_of_place, n1, n2), 0.01);
+               make_view2d(out_of_place.data(), n1, n2), 0.01);
   check(max_abs_diff(f0, out_of_place) > 0.0, "solve must change the field");
   check(*std::min_element(out_of_place.begin(), out_of_place.end()) > 0.0,
         "solution must remain positive");
@@ -280,8 +259,8 @@ void test_solve_and_inplace() {
 
   // In-place solve.
   std::vector<double> in_place = f0;
-  solver.solve(data.equation(), make_view2d(in_place, n1, n2),
-               make_view2d(in_place, n1, n2), 0.01);
+  solver.solve(data.equation(), make_view2d(in_place.data(), n1, n2),
+               make_view2d(in_place.data(), n1, n2), 0.01);
   check(max_abs_diff(in_place, out_of_place) < 1e-14,
         "in-place solve must match out-of-place");
 
@@ -443,8 +422,8 @@ void test_repeated_boundary_updates() {
   BoundaryConditions all_dirichlet;
   for (Side side : all_sides()) all_dirichlet.set_dirichlet(side, 0.5);
   Equation dirichlet_equation(
-      make_view2d(data.G(), n1, n2), make_view2d(data.D11(), n1, n2),
-      make_view2d(data.D12(), n1, n2), make_view2d(data.D22(), n1, n2),
+      make_view2d(data.G().data(), n1, n2), make_view2d(data.D11().data(), n1, n2),
+      make_view2d(data.D12().data(), n1, n2), make_view2d(data.D22().data(), n1, n2),
       all_dirichlet);
   std::vector<double> third(n);
   solver.solve(dirichlet_equation, make_view2d(f0.data(), n1, n2),
@@ -516,121 +495,27 @@ void test_boundary_reference_semantics() {
 }
 
 
-void test_eigen_support() {
-  Mesh mesh({0.0, 0.4, 1.0, 1.5}, {0.0, 0.5, 1.2});
-  const std::size_t n1 = mesh.n1();
-  const std::size_t n2 = mesh.n2();
+void test_physics_helpers() {
+  check(near(physics::degrees_to_radians(180.0), physics::pi, 1e-15),
+        "degree-to-radian conversion");
+  check(near(physics::radians_to_degrees(physics::pi), 180.0, 1e-13),
+        "radian-to-degree conversion");
+  check(near(physics::joule_to_mev(physics::mev_to_joule(2.0)), 2.0, 1e-14),
+        "MeV-to-joule round trip");
+  check(near(physics::joule_to_kev(physics::kev_to_joule(2.0)), 2.0, 1e-14),
+        "keV-to-joule round trip");
 
-  Eigen::MatrixXd G(n1, n2);
-  Eigen::MatrixXd D11(n1, n2);
-  Eigen::MatrixXd D12(n1, n2);
-  Eigen::MatrixXd D22(n1, n2);
-  Eigen::MatrixXd inv_tau(n1, n2);
-  for (std::size_t i = 0; i < n1; ++i) {
-    for (std::size_t j = 0; j < n2; ++j) {
-      const auto ii = static_cast<Eigen::Index>(i);
-      const auto jj = static_cast<Eigen::Index>(j);
-      G(ii, jj) = 1.0 + 0.1 * mesh.q1_center(i);
-      D11(ii, jj) = 1.0 + 0.2 * mesh.q2_center(j);
-      D12(ii, jj) = 0.05;
-      D22(ii, jj) = 0.8 + 0.1 * mesh.q1_center(i);
-      inv_tau(ii, jj) = 0.02;
-    }
-  }
-
-  BoundaryConditions bc;
-  bc.set_dirichlet(Side::Q1Min, 0.0);
-  bc.set_zero_flux(Side::Q1Max);
-  bc.set_zero_flux(Side::Q2Min);
-  bc.set_zero_flux(Side::Q2Max);
-
-  // Direct Eigen coefficients. Inverse loss defaults to zero and is set
-  // separately when needed.
-  Equation eigen_equation(G, D11, D12, D22, bc);
-  check(!eigen_equation.has_loss(), "Eigen inverse loss defaults to zero");
-  check(eigen_equation.inv_tau(0, 0) == 0.0, "default inverse-loss value");
-  eigen_equation.set_loss(inv_tau);
-  check(eigen_equation.has_loss() && !eigen_equation.loss_is_constant(),
-        "Eigen inverse-loss matrix set manually");
-  check(eigen_equation.G_view().data() == G.data(),
-        "Eigen coefficient view must be zero-copy");
-  check(eigen_equation.G_view().extent1() == n1 &&
-            eigen_equation.G_view().extent2() == n2,
-        "Eigen coefficient extents");
-  check(eigen_equation.G_view().stride1() == 1 &&
-            eigen_equation.G_view().stride2() ==
-                static_cast<std::ptrdiff_t>(n1),
-        "Eigen column-major strides");
-
-  const Eigen::MatrixXd G_const = G;
-  Equation const_equation(G_const, D11, D12, D22, bc);
-  check(const_equation.G_view().data() == G_const.data(),
-        "const Eigen coefficient matrices are supported");
-  // Same data through the existing explicit view interface.
-  ArrayView2D<const double> Gv(G.data(), n1, n2, 1, n1);
-  ArrayView2D<const double> D11v(D11.data(), n1, n2, 1, n1);
-  ArrayView2D<const double> D12v(D12.data(), n1, n2, 1, n1);
-  ArrayView2D<const double> D22v(D22.data(), n1, n2, 1, n1);
-  ArrayView2D<const double> tau_v(inv_tau.data(), n1, n2, 1, n1);
-  Equation view_equation(Gv, D11v, D12v, D22v, bc);
-  view_equation.set_loss(tau_v);
-
-  Eigen::MatrixXd f0(n1, n2);
-  for (std::size_t i = 0; i < n1; ++i) {
-    for (std::size_t j = 0; j < n2; ++j) {
-      f0(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
-          1.0 + 0.1 * static_cast<double>(i + j);
-    }
-  }
-
-  Solver solver(mesh);
-  Eigen::MatrixXd eigen_out(n1, n2);
-  Eigen::MatrixXd view_out(n1, n2);
-  solver.solve(eigen_equation, f0, eigen_out, 0.01);
-  solver.solve(view_equation, make_view2d(f0.data(), n1, n2, 1, n1),
-               make_view2d(view_out.data(), n1, n2, 1, n1), 0.01);
-  check(max_abs_diff(eigen_out, view_out) < 1e-14,
-        "Eigen and view solves must agree");
-
-  // In-place solve using the same Eigen matrix as input and output.
-  Eigen::MatrixXd inplace = f0;
-  solver.solve(eigen_equation, inplace, inplace, 0.01);
-  check(max_abs_diff(eigen_out, inplace) < 1e-14,
-        "Eigen in-place solve must agree");
-
-  // Coefficient updates after Equation construction are visible.
-  G(1, 1) += 0.25;
-  D11(1, 1) += 0.10;
-  Eigen::MatrixXd updated(n1, n2);
-  solver.solve(eigen_equation, f0, updated, 0.01);
-  check(max_abs_diff(eigen_out, updated) > 1e-12,
-        "Eigen coefficient updates must affect solve");
-
-  // Wrong field sizes are rejected by the existing Solver validation.
-  Eigen::MatrixXd wrong(n1 + 1, n2);
-  expect_throw([&] { solver.solve(eigen_equation, f0, wrong, 0.01); },
-               "wrong Eigen output size must throw");
-  expect_throw([&] { solver.solve(eigen_equation, wrong, eigen_out, 0.01); },
-               "wrong Eigen input size must throw");
-
-  // Mismatched coefficient extents are rejected by Equation.
-  Eigen::MatrixXd bad_D11(n1, n2 + 1);
-  expect_throw(
-      [&] { Equation bad(G, bad_D11, D12, D22, bc); },
-      "mismatched Eigen coefficient extents must throw");
-
-  // Temporary coefficient matrices must not be accepted. The lvalue-only
-  // constructor makes the four-matrix form ill-formed, and there is no
-  // five-matrix Equation constructor.
-  static_assert(!std::is_constructible_v<
-                    Equation, Eigen::MatrixXd, Eigen::MatrixXd,
-                    Eigen::MatrixXd, Eigen::MatrixXd, BoundaryConditions&>,
-                "Equation must reject temporary Eigen coefficients");
-  static_assert(!std::is_constructible_v<
-                    Equation, Eigen::MatrixXd, Eigen::MatrixXd,
-                    Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd,
-                    BoundaryConditions&>,
-                "Equation must not have an inv_tau constructor");
+  const double rest_j = physics::ev_to_joule(0.511e6);
+  const double kinetic_j = physics::mev_to_joule(1.0);
+  const double momentum =
+      physics::momentum_si(kinetic_j, rest_j);
+  const double kinetic_back =
+      physics::kinetic_energy_si(momentum, rest_j);
+  check(momentum > 0.0, "SI momentum is positive");
+  check(near(kinetic_back, kinetic_j, 1e-14),
+        "momentum/kinetic-energy round trip");
+  check(near(physics::momentum_mev_c(0.0), 0.0, 1e-15),
+        "zero kinetic energy has zero momentum");
 }
 
 void test_albert_young_loader() {
@@ -749,12 +634,12 @@ void test_strided_3d_slice_integration() {
     D220[k] = D22[k * layers];
     f0[k] = f[k * layers];
   }
-  Equation standalone(make_view2d(G0, n1, n2), make_view2d(D110, n1, n2),
-                     make_view2d(D120, n1, n2), make_view2d(D220, n1, n2),
+  Equation standalone(make_view2d(G0.data(), n1, n2), make_view2d(D110.data(), n1, n2),
+                     make_view2d(D120.data(), n1, n2), make_view2d(D220.data(), n1, n2),
                      bc);
   Solver standalone_solver(mesh);
-  standalone_solver.solve(standalone, make_view2d(f0, n1, n2),
-                          make_view2d(out0, n1, n2), 0.01);
+  standalone_solver.solve(standalone, make_view2d(f0.data(), n1, n2),
+                          make_view2d(out0.data(), n1, n2), 0.01);
 
   double baseline_diff = 0.0;
   double layer_diff = 0.0;
@@ -791,29 +676,6 @@ void test_strided_3d_slice_integration() {
         "slice boundary update must affect solve");
 }
 
-void test_physics_helpers() {
-  check(near(physics::degrees_to_radians(180.0), physics::pi, 1e-15),
-        "degree-to-radian conversion");
-  check(near(physics::radians_to_degrees(physics::pi), 180.0, 1e-13),
-        "radian-to-degree conversion");
-  check(near(physics::joule_to_mev(physics::mev_to_joule(2.0)), 2.0, 1e-14),
-        "MeV-to-joule round trip");
-  check(near(physics::joule_to_kev(physics::kev_to_joule(2.0)), 2.0, 1e-14),
-        "keV-to-joule round trip");
-
-  const double rest_j = physics::ev_to_joule(0.511e6);
-  const double kinetic_j = physics::mev_to_joule(1.0);
-  const double momentum =
-      physics::momentum_si(kinetic_j, rest_j);
-  const double kinetic_back =
-      physics::kinetic_energy_si(momentum, rest_j);
-  check(momentum > 0.0, "SI momentum is positive");
-  check(near(kinetic_back, kinetic_j, 1e-14),
-        "momentum/kinetic-energy round trip");
-  check(near(physics::momentum_mev_c(0.0), 0.0, 1e-15),
-        "zero kinetic energy has zero momentum");
-}
-
 void test_validation_errors() {
   Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1});
   CaseConfig config;
@@ -830,8 +692,8 @@ void test_validation_errors() {
   std::vector<double> wrong((n1 + 1) * n2, 1.0);
   std::vector<double> out(n);
   expect_throw([&] {
-    solver.solve(data.equation(), make_view2d(wrong, n1 + 1, n2),
-                 make_view2d(out, n1, n2), 0.01);
+    solver.solve(data.equation(), make_view2d(wrong.data(), n1 + 1, n2),
+                 make_view2d(out.data(), n1, n2), 0.01);
   }, "wrong input extents must throw");
 
   expect_throw([&] {
@@ -860,19 +722,19 @@ void test_validation_errors() {
   data.f()[0] = 1.0;
 
   expect_throw([&] {
-    Equation bad(make_view2d(data.G(), n1, n2),
-                 make_view2d(data.D11(), n1 + 1, n2),
-                 make_view2d(data.D12(), n1, n2),
-                 make_view2d(data.D22(), n1, n2), data.equation().bc());
+    Equation bad(make_view2d(data.G().data(), n1, n2),
+                 make_view2d(data.D11().data(), n1 + 1, n2),
+                 make_view2d(data.D12().data(), n1, n2),
+                 make_view2d(data.D22().data(), n1, n2), data.equation().bc());
   }, "mismatched coefficient extents must throw");
 
   std::vector<double> loss((n1 + 1) * n2, 0.0);
-  Equation bad(make_view2d(data.G(), n1, n2),
-               make_view2d(data.D11(), n1, n2),
-               make_view2d(data.D12(), n1, n2),
-               make_view2d(data.D22(), n1, n2), data.equation().bc());
+  Equation bad(make_view2d(data.G().data(), n1, n2),
+               make_view2d(data.D11().data(), n1, n2),
+               make_view2d(data.D12().data(), n1, n2),
+               make_view2d(data.D22().data(), n1, n2), data.equation().bc());
   expect_throw([&] {
-    bad.set_loss(make_view2d(loss, n1 + 1, n2));
+    bad.set_loss(make_view2d(loss.data(), n1 + 1, n2));
   }, "mismatched loss extents must throw");
 }
 
@@ -899,7 +761,6 @@ int main() {
   failures += run("source_branch", test_source_branch);
   failures += run("repeated_boundary_updates", test_repeated_boundary_updates);
   failures += run("boundary_reference_semantics", test_boundary_reference_semantics);
-  failures += run("eigen_support", test_eigen_support);
   failures += run("physics_helpers", test_physics_helpers);
   failures += run("albert_young_loader", test_albert_young_loader);
   failures += run("strided_3d_slice_integration",

@@ -47,7 +47,8 @@ default `make` builds the app directly from source, so it does not require
 | Component | Responsibility |
 |---|---|
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. |
-| `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Supports row-major, column-major, and noncontiguous slices of larger arrays. |
+| `sayram2d::Array2D<T>` | Owning, contiguous, row-major 2-D array. Provides indexing, sizing, fill, iteration, and `view()`. |
+| `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Used by `Equation` and `Solver` and for slices of larger arrays. |
 | `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices. |
 | `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss, and a non-owning reference to the caller-owned boundary configuration. |
 | `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs one documented linear solve. |
@@ -70,11 +71,31 @@ const std::size_t n2 = mesh.n2();
 available through `q1_center(i)` and `q2_center(j)`. A mesh may be shared
 read-only by multiple solvers.
 
+### Array2D
+
+`Array2D<T>` owns contiguous, row-major 2D storage. It is the simple owning
+type for coefficients and fields:
+
+```cpp
+Array2D<double> G(n1, n2, 1.0);
+Array2D<double> D11(n1, n2, 1.0);
+Array2D<double> D12(n1, n2, 0.8);
+Array2D<double> D22(n1, n2, 1.0);
+
+G(i, j) = ...;          // no layout decision at the call site
+auto G_view = G.view(); // mutable view; a const Array2D gives a const view
+```
+
+`Array2D` provides `extent1()`, `extent2()`, `size()`, `operator()`, `fill()`,
+and iteration. Its layout is always row-major, so callers do not need to
+remember how the storage was filled.
+
 ### ArrayView2D
 
-`ArrayView2D<T>` is the bridge between a 3D or 4D host array and the 2D solver.
-It does **not** represent the whole 3D array. It represents one logical 2D plane
-with extents `(n1, n2)` and two element strides.
+`ArrayView2D<T>` is the non-owning view used by `Equation` and `Solver`, and the
+bridge between a 3D or 4D host array and the 2D solver. It does **not**
+represent the whole 3D array. It represents one logical 2D plane with extents
+`(n1, n2)` and two element strides.
 
 #### Memory model
 
@@ -92,42 +113,15 @@ copying. The reverse conversion is not allowed.
 
 #### Constructing views
 
-For a contiguous `std::vector`, the default is row-major:
+For owned data, use `Array2D` and call `view()`:
 
 ```cpp
-std::vector<double> G(n1 * n2, 1.0);  // n1*n2 values
-const Shape2 shape{n1, n2};
-auto G2 = make_view2d(G, shape);      // G2(i, j) == G[i*n2 + j]
+Array2D<double> G(n1, n2, 1.0);
+auto G_view = G.view();
 ```
 
-A `std::vector` has no intrinsic row-major or column-major layout; it is a
-linear buffer. Its length must equal `n1 * n2`; the caller chooses both the
-logical shape and the index mapping. `ArrayLayout` selects that mapping:
-
-- `ArrayLayout::row_major`: `G[i*n2 + j]`
-- `ArrayLayout::column_major`: `G[i + j*n1]`
-
-Fill the buffer in the same order you intend to read it. For row-major:
-
-```cpp
-for (std::size_t i = 0; i < n1; ++i) {
-  for (std::size_t j = 0; j < n2; ++j) {
-    G[i * n2 + j] = static_cast<double>(i + j);
-  }
-}
-auto row_view = make_view2d(G, shape);
-```
-
-Calling `make_view2d(G, shape, ArrayLayout::column_major)` on the same
-row-major-filled buffer is legal, but it maps `(i,j)` to `G[i + j*n1]`. It does
-not transpose or rearrange the data; it simply applies a different indexing
-convention. Use `column_major` only when the buffer was deliberately filled as
-`G[i + j*n1]`.
-
-Do not treat a 1D profile as a 2D field unless `n×1` or `1×n` is genuinely
-what you mean.
-
-For arbitrary layouts, use the shape/stride form:
+For an external buffer, construct an explicit view with pointer, shape, and
+strides:
 
 ```cpp
 auto view = make_view2d(pointer, Shape2{n1, n2},
@@ -140,23 +134,11 @@ There is also a lower-level five-argument form:
 auto raw_view = make_view2d(pointer, n1, n2, stride1, stride2);
 ```
 
-`Eigen::MatrixXd` has a direct convenience path: a full `MatrixXd` lvalue is
-accepted by `Equation` and `Solver` without an explicit view, using Eigen's
-column-major layout:
+The three-argument pointer form creates a contiguous row-major view:
 
 ```cpp
-Eigen::MatrixXd G(n1, n2);
-Eigen::MatrixXd D11(n1, n2);
-Eigen::MatrixXd D12(n1, n2);
-Eigen::MatrixXd D22(n1, n2);
-
-Equation equation(G, D11, D12, D22, bc);  // direct, zero-copy
-Solver solver(mesh);
-solver.solve(equation, f_in, f_out, dt);
+auto row_view = make_view2d(pointer, n1, n2);
 ```
-
-`Eigen::Block`, `Eigen::Map`, and slices of larger arrays are not implicitly
-accepted; construct an explicit `ArrayView2D` for them.
 
 #### Common 3D layouts
 
@@ -252,16 +234,14 @@ An `Equation` combines the four diffusion coefficients, an optional inverse
 loss, and a boundary-condition object. It does not own any of them.
 
 ```cpp
-Equation equation(G, D11, D12, D22, bc);
+Equation equation(G.view(), D11.view(), D12.view(), D22.view(), bc);
 
 // Optional; inverse loss defaults to zero.
 equation.set_loss(0.0);
 ```
 
-The coefficients may be full `Eigen::MatrixXd` objects or explicit
-`ArrayView2D` objects. A full `MatrixXd` lvalue is accepted directly and uses
-Eigen's column-major layout. `Eigen::Block`, `Eigen::Map`, and slices of larger
-arrays must be passed as `ArrayView2D`.
+The coefficients are `ArrayView2D<const double>` views. They are typically
+obtained from `Array2D::view()` or from explicit slices of larger arrays.
 
 Coefficient values and boundary values may be changed in place between solves.
 The caller must keep the coefficient buffers and `BoundaryConditions` object
@@ -296,13 +276,13 @@ bc.validate(mesh);  // optional explicit validation
 
 ```cpp
 Solver solver(mesh);
-solver.solve(equation, f_in, f_out, dt);
+solver.solve(equation, f_in.view(), f_out.view(), dt);
 ```
 
-`f_in` and `f_out` may be `Eigen::MatrixXd` objects or `ArrayView2D` views. The
-same storage may be used for both arguments for an in-place solve. A `Solver`
-is reusable across sequential solves on the same mesh, but it must not be used
-concurrently from multiple threads.
+`f_in` and `f_out` are `ArrayView2D` views. The same storage may be used for
+both arguments for an in-place solve. A `Solver` is reusable across sequential
+solves on the same mesh, but it must not be used concurrently from multiple
+threads.
 
 The discretization, positivity-preserving flux construction, and matrix
 assembly are described in
@@ -345,8 +325,10 @@ Albert–Young model.
 - Coefficient values, boundary values, boundary types, and data spans may be
   changed in place between solves. Construction from temporary coefficient
   matrices or a temporary `BoundaryConditions` is rejected at compile time.
+- `Array2D` owns its storage; a view from `Array2D::view()` is valid only while
+  that `Array2D` exists and has not been reallocated or reassigned.
 - `ArrayView2D` never allocates or copies.
-- In-place solves `solver.solve(eq, f, f, dt)` are supported.
+- In-place solves `solver.solve(eq, f.view(), f.view(), dt)` are supported.
 
 ### Concurrency
 
@@ -357,7 +339,7 @@ may be shared.
 
 ## 2. Examples
 
-The examples are intentionally separate from the core library. Examples 1–3
+The examples are intentionally separate from the core library. Examples 1–2
 are small library demos; the Albert–Young example is the complete standalone
 application.
 
@@ -376,7 +358,7 @@ the configuration and I/O patterns. The methods
 names and units; the Albert–Young driver uses `alpha0`, `logE`, `t`, and
 `PSD`.
 
-### Example 1: vector-based PPFV
+### Example 1: time-independent PPFV
 
 [`src/examples/example1.cc`](src/examples/example1.cc) solves the uniform-grid
 PPFV test problem from the paper:
@@ -387,8 +369,8 @@ PPFV test problem from the paper:
 - `f=0` at `x=0`, zero flux at `x=1`, the prescribed lower-energy profile at
   `y=0`, and `f=0` at `y=1`.
 
-It advances to `t=0.01` with `dt=1e-4` using `std::vector` coefficient/field
-storage and explicit `make_view2d(...)` views.
+It advances to `t=0.01` with `dt=1e-4` using `Array2D` coefficient/field storage
+and `ArrayView2D` views inside `Equation` and `Solver`.
 
 ```bash
 make example1
@@ -405,60 +387,9 @@ cmake --build build --target sayram2d_example1
 ./build/sayram2d_example1
 ```
 
-### Example 2: Eigen embedding
+### Example 2: time-dependent coefficients and boundary conditions
 
-This is the simplest complete example of embedding Sayram2D in another
-program. It uses the direct `Eigen::MatrixXd` interface; the view-based
-interface is described under [ArrayView2D](#arrayview2d).
-
-A complete, compilable version is
-[`src/examples/example_eigen.cc`](src/examples/example_eigen.cc).
-
-```cpp
-#include <Eigen/Dense>
-
-#include "boundary_conditions.h"
-#include "equation.h"
-#include "mesh.h"
-#include "solver.h"
-
-using namespace sayram2d;
-
-Mesh mesh({0.0, 0.3, 0.7, 1.0}, {0.0, 0.4, 1.0, 1.7});
-
-const std::size_t n1 = mesh.n1();
-const std::size_t n2 = mesh.n2();
-
-Eigen::MatrixXd G = Eigen::MatrixXd::Constant(n1, n2, 1.0);
-Eigen::MatrixXd D11 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
-Eigen::MatrixXd D12 = Eigen::MatrixXd::Zero(n1, n2);
-Eigen::MatrixXd D22 = Eigen::MatrixXd::Constant(n1, n2, 1.0);
-
-BoundaryConditions bc;
-bc.set_dirichlet(Side::Q1Min, 0.5);
-bc.set_zero_flux(Side::Q1Max);
-bc.set_zero_flux(Side::Q2Min);
-bc.set_zero_flux(Side::Q2Max);
-
-Equation equation(G, D11, D12, D22, bc);
-// Optional; inverse loss defaults to zero.
-equation.set_loss(0.0);
-
-Solver solver(mesh);
-Eigen::MatrixXd f_in = Eigen::MatrixXd::Ones(n1, n2);
-Eigen::MatrixXd f_out(n1, n2);
-solver.solve(equation, f_in, f_out, 0.01);
-```
-
-Build and run it with:
-
-```bash
-make example_eigen
-```
-
-### Example 3: time-dependent coefficients and boundary conditions
-
-[`src/examples/example3.cc`](src/examples/example3.cc) shows how to change the
+[`src/examples/example2.cc`](src/examples/example2.cc) shows how to change the
 diffusion coefficients and a Dirichlet boundary value during a simulation.
 
 - The 50×50 grid advances for 100 steps with `dt = 0.01`.
@@ -468,22 +399,22 @@ diffusion coefficients and a Dirichlet boundary value during a simulation.
   coefficients nor the boundary value collapse to zero.
 
 The `Equation` is constructed once. Its coefficient views remain valid while the
-underlying vectors are updated in place, and its boundary reference sees
-changes to `BoundaryConditions`. The example prints `D11`, the Dirichlet value,
-and the field minimum/maximum at `t = 0`, `0.5`, and `1`.
+underlying `Array2D` objects are updated in place, and its boundary reference
+sees changes to `BoundaryConditions`. The example prints `D11`, the Dirichlet
+value, and the field minimum/maximum at `t = 0`, `0.5`, and `1`.
 
 ```bash
-make example3
+make example2
 ```
 
 It builds and runs the example. The executable is also available at
-`build/sayram2d/example3`.
+`build/sayram2d/example2`.
 
 With CMake:
 
 ```bash
-cmake --build build --target sayram2d_example3
-./build/sayram2d_example3
+cmake --build build --target sayram2d_example2
+./build/sayram2d_example2
 ```
 
 ### Albert–Young example
@@ -614,7 +545,7 @@ The app writes one HDF5 file:
 ```
 
 Each dataset carries a `units` attribute. Fields have shape `(n1, n2)`.
-Eigen matrices are packed row-major into an explicit buffer before HDF5 writes.
+Fields are packed row-major into an explicit buffer before HDF5 writes.
 
 #### Build, run, and plot
 
@@ -682,7 +613,7 @@ Makefile            sayram2d app, library, and examples
 src/*.cc            numerical library implementation
 src/include/        public library headers
 src/app/            generic application configuration and HDF5 I/O
-src/examples/       example1.cc, example_eigen.cc, and example3.cc
+src/examples/       example1.cc and example2.cc
 src/examples/albert_young/
                     Albert–Young driver and case model
 scripts/            data conversion and plotting

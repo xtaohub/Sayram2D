@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <Eigen/Dense>
-
+#include "array2d.h"
 #include "mesh.h"
 
 namespace sayram2d::app {
@@ -19,10 +18,10 @@ struct InputData {
   std::size_t n2 = 0;
   std::vector<double> q1_edges;
   std::vector<double> q2_edges;
-  Eigen::MatrixXd G;
-  Eigen::MatrixXd D11;
-  Eigen::MatrixXd D12;
-  Eigen::MatrixXd D22;
+  Array2D<double> G;
+  Array2D<double> D11;
+  Array2D<double> D12;
+  Array2D<double> D22;
 };
 
 InputData load_input(const std::filesystem::path& path);
@@ -45,7 +44,7 @@ class HDF5Output {
                     const std::string& units = {});
 
   // Write a 2D field as /<name>/<frame>, with a `units` attribute.
-  void write_field(std::size_t frame, const Eigen::MatrixXd& field,
+  void write_field(std::size_t frame, ArrayView2D<const double> field,
                    const std::string& name = "PSD",
                    const std::string& units = "arbitrary");
 

@@ -110,7 +110,7 @@ std::vector<double> read_vector(hid_t file, const char* name) {
   return values;
 }
 
-Eigen::MatrixXd read_matrix(hid_t file, const char* name, std::size_t n1,
+Array2D<double> read_matrix(hid_t file, const char* name, std::size_t n1,
                             std::size_t n2) {
   Dataset dataset(check_id(H5Dopen2(file, name, H5P_DEFAULT),
                            "open dataset /" + std::string(name)));
@@ -132,12 +132,10 @@ Eigen::MatrixXd read_matrix(hid_t file, const char* name, std::size_t n1,
   check_status(H5Dread(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                        H5P_DEFAULT, row_major.data()),
                "read dataset /" + std::string(name));
-  Eigen::MatrixXd matrix(static_cast<Eigen::Index>(n1),
-                         static_cast<Eigen::Index>(n2));
+  Array2D<double> matrix(n1, n2);
   for (std::size_t i = 0; i < n1; ++i) {
     for (std::size_t j = 0; j < n2; ++j) {
-      matrix(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) =
-          row_major[i * n2 + j];
+      matrix(i, j) = row_major[i * n2 + j];
     }
   }
   return matrix;
@@ -222,11 +220,11 @@ void HDF5Output::write_vector(const std::vector<double>& values,
   write_vector_dataset(file_id_, name.c_str(), values, units);
 }
 
-void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field,
+void HDF5Output::write_field(std::size_t frame,
+                             ArrayView2D<const double> field,
                              const std::string& name,
                              const std::string& units) {
-  if (field.rows() != static_cast<Eigen::Index>(n1_) ||
-      field.cols() != static_cast<Eigen::Index>(n2_)) {
+  if (field.extent1() != n1_ || field.extent2() != n2_) {
     throw std::runtime_error("HDF5: /" + name + "/" + std::to_string(frame) +
                              " has the wrong dimensions");
   }
@@ -241,8 +239,7 @@ void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field,
   std::vector<double> row_major(n1_ * n2_);
   for (std::size_t i = 0; i < n1_; ++i) {
     for (std::size_t j = 0; j < n2_; ++j) {
-      row_major[i * n2_ + j] =
-          field(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
+      row_major[i * n2_ + j] = field(i, j);
     }
   }
 
