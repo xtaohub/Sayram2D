@@ -357,8 +357,8 @@ may be shared.
 
 ## 2. Examples
 
-The examples are intentionally separate from the core library. Examples 1 and
-2 are small library demos; the Albert–Young example is the complete standalone
+The examples are intentionally separate from the core library. Examples 1–3
+are small library demos; the Albert–Young example is the complete standalone
 application.
 
 ### Application support layer
@@ -454,6 +454,36 @@ Build and run it with:
 
 ```bash
 make example_eigen
+```
+
+### Example 3: time-dependent coefficients and boundary conditions
+
+[`src/examples/example3.cc`](src/examples/example3.cc) shows how to change the
+diffusion coefficients and a Dirichlet boundary value during a simulation.
+
+- The 50×50 grid advances for 100 steps with `dt = 0.01`.
+- `D11`, `D12`, and `D22` decay as `exp(-t/tau)` with `tau = 10`.
+- The `Q1Min` Dirichlet value follows the same slow decay.
+- At `t = 1`, the decay factor is still about `0.905`, so neither the
+  coefficients nor the boundary value collapse to zero.
+
+The `Equation` is constructed once. Its coefficient views remain valid while the
+underlying vectors are updated in place, and its boundary reference sees
+changes to `BoundaryConditions`. The example prints `D11`, the Dirichlet value,
+and the field minimum/maximum at `t = 0`, `0.5`, and `1`.
+
+```bash
+make example3
+```
+
+It builds and runs the example. The executable is also available at
+`build/sayram2d/example3`.
+
+With CMake:
+
+```bash
+cmake --build build --target sayram2d_example3
+./build/sayram2d_example3
 ```
 
 ### Albert–Young example
@@ -652,7 +682,7 @@ Makefile            sayram2d app, library, and examples
 src/*.cc            numerical library implementation
 src/include/        public library headers
 src/app/            generic application configuration and HDF5 I/O
-src/examples/       example1.cc and example_eigen.cc
+src/examples/       example1.cc, example_eigen.cc, and example3.cc
 src/examples/albert_young/
                     Albert–Young driver and case model
 scripts/            data conversion and plotting
