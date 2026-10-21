@@ -128,14 +128,14 @@ Array2D<double> read_matrix(hid_t file, const char* name, std::size_t n1,
                              " has the wrong shape");
   }
 
-  std::vector<double> buffer(n1 * n2);
+  std::vector<double> row_major(n1 * n2);
   check_status(H5Dread(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                       H5P_DEFAULT, buffer.data()),
+                       H5P_DEFAULT, row_major.data()),
                "read dataset /" + std::string(name));
   Array2D<double> matrix(n1, n2);
   for (std::size_t j = 0; j < n2; ++j) {
     for (std::size_t i = 0; i < n1; ++i) {
-      matrix(i, j) = buffer[i + j * n1];
+      matrix(i, j) = row_major[i * n2 + j];
     }
   }
   return matrix;
@@ -208,7 +208,6 @@ HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
                 H5P_DEFAULT),
       "create " + path.string());
   file_id_ = file;
-  write_string_attribute(file_id_, "index_order", "column-major i+j*n1");
 }
 
 HDF5Output::~HDF5Output() {
@@ -237,10 +236,10 @@ void HDF5Output::write_field(std::size_t frame,
     H5Gclose(group);
   }
 
-  std::vector<double> buffer(n1_ * n2_);
+  std::vector<double> row_major(n1_ * n2_);
   for (std::size_t j = 0; j < n2_; ++j) {
     for (std::size_t i = 0; i < n1_; ++i) {
-      buffer[i + j * n1_] = field(i, j);
+      row_major[i * n2_ + j] = field(i, j);
     }
   }
 
@@ -253,7 +252,7 @@ void HDF5Output::write_field(std::size_t frame,
                  space.id(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
       "create dataset /" + dataset_name));
   check_status(H5Dwrite(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                        H5P_DEFAULT, buffer.data()),
+                        H5P_DEFAULT, row_major.data()),
                "write dataset /" + dataset_name);
   if (!units.empty()) {
     write_string_attribute(dataset.id(), "units", units);
