@@ -7,7 +7,7 @@
 #include "boundary_conditions.h"
 #include "mesh.h"
 
-namespace sayram2d::app {
+namespace sayram2d::albert_young {
 
 // Original Albert-Young initial distribution in (alpha0, log E) coordinates.
 double albert_young_initial(double alpha, double log_energy) noexcept;
@@ -33,4 +33,4 @@ class AlbertYoungModel {
   BoundaryConditions bc_;
 };
 
-}  // namespace sayram2d::app
+}  // namespace sayram2d::albert_young

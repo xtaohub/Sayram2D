@@ -6,7 +6,7 @@
 
 #include "physics.h"
 
-namespace sayram2d::app {
+namespace sayram2d::albert_young {
 namespace {
 
 constexpr double epsilon = std::numeric_limits<double>::epsilon();
@@ -48,4 +48,4 @@ Eigen::MatrixXd AlbertYoungModel::initial_field() const {
   return field;
 }
 
-}  // namespace sayram2d::app
+}  // namespace sayram2d::albert_young

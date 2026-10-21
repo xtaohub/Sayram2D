@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
       throw std::runtime_error("input dimensions do not match mesh");
     }
 
-    sayram2d::app::AlbertYoungModel model(mesh);
+    sayram2d::albert_young::AlbertYoungModel model(mesh);
     sayram2d::Equation equation(input.G, input.D11, input.D12, input.D22,
                                 model.bc());
     sayram2d::Solver solver(mesh);

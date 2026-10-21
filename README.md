@@ -461,6 +461,10 @@ can be reused or adapted for other realistic 2D diffusion applications; its
 current dataset names and output schema are specific to this Albert–Young case.
 The INI parser follows the same application-layer pattern.
 
+Application support types (`Config`, `InputData`, `HDF5Output`) are in
+`sayram2d::app`. The Albert–Young model and initial/boundary functions are in
+`sayram2d::albert_young`.
+
 #### Build and run
 
 ```bash

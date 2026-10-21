@@ -17,6 +17,7 @@ namespace {
 
 using namespace sayram2d;
 using namespace sayram2d::app;
+using namespace sayram2d::albert_young;
 
 void check(bool condition, const std::string& message) {
   if (!condition) throw std::runtime_error(message);
