@@ -208,6 +208,7 @@ HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
                 H5P_DEFAULT),
       "create " + path.string());
   file_id_ = file;
+  write_string_attribute(file_id_, "index_order", "row-major i*n2+j");
 }
 
 HDF5Output::~HDF5Output() {

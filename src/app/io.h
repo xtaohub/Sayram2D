@@ -28,7 +28,8 @@ InputData load_input(const std::filesystem::path& path);
 
 // Native HDF5 writer for a general 2D result layout:
 //   /<name> for vectors and /<name>/<frame> for fields
-// Matrix datasets are (n1, n2), with the last dimension varying fastest.
+// Matrix datasets are (n1, n2) and use row-major storage in the file, while
+// Array2D/ArrayView2D use column-major storage in memory.
 class HDF5Output {
  public:
   HDF5Output(const std::filesystem::path& path, std::size_t n1,

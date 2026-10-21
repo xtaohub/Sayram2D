@@ -550,7 +550,8 @@ The app writes one HDF5 file:
 
 Each dataset carries a `units` attribute. Fields have shape `(n1, n2)`.
 Fields are packed row-major into an explicit buffer at the HDF5 boundary,
-even though the in-memory `Array2D`/`ArrayView2D` layout is column-major.
+even though the in-memory `Array2D`/`ArrayView2D` layout is column-major. The
+output root attribute records `index_order = "row-major i*n2+j"`.
 
 #### Build, run, and plot
 
