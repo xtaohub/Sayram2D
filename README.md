@@ -158,40 +158,11 @@ The three-argument pointer form creates a contiguous column-major view:
 auto contiguous_view = make_view2d(pointer, n1, n2);
 ```
 
-#### Common 3D layouts
-
-For the default column-major ordering with shape `(q1, q2, q3)`:
-
-```text
-data[q1 + n1*(q2 + n2*q3)]
-```
-
-A fixed `q3 = k` plane is contiguous:
-
-| Layout | Fixed-`q3` offset | `stride1` | `stride2` |
-|---|---:|---:|---:|
-| `q3` slowest, column-major: `data[i + n1*(j + n2*k)]` | `k*n1*n2` | `1` | `n1` |
-| `q3` fastest, row-major: `data[(i*n2 + j)*n3 + k]` | `k` | `n2*n3` | `n3` |
-
-The first row is the preferred layout for L-shell parallelism: each 2D plane
-is contiguous. The second row remains available with an explicit strided view.
-
-For a 4D column-major array `(q1,q2,q3,q4)`, fixing `q3=k` and `q4=l` gives:
-
-```cpp
-const std::ptrdiff_t offset =
-    k*n1*n2 + l*n1*n2*n3;
-const std::ptrdiff_t stride1 = 1;
-const std::ptrdiff_t stride2 = n1;
-```
-
-In general, remove the two fixed axes from the shape, keep the strides of the
-two remaining axes, and add the fixed-index contributions to the data pointer.
-
 #### Complete 3D example
 
-`Array3D` belongs to the 3D host code (`sayram`), not to `sayram2d`. A thin
-owning wrapper is enough:
+To make good use of the column-major `ArrayView2D` and mirror the `Array2D`
+interface, define a thin `Array3D` in the 3D host code. `Array3D` belongs to
+`sayram`, not to `sayram2d`:
 
 ```cpp
 // In the 3D code; not part of sayram2d.
