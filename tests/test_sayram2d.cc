@@ -21,6 +21,7 @@
 #include "container_adapter.h"
 #include "equation.h"
 #include "mesh.h"
+#include "physics.h"
 #include "solver.h"
 
 namespace {
@@ -769,6 +770,29 @@ void test_strided_3d_slice_integration() {
         "slice boundary update must affect solve");
 }
 
+void test_physics_helpers() {
+  check(near(physics::degrees_to_radians(180.0), physics::pi, 1e-15),
+        "degree-to-radian conversion");
+  check(near(physics::radians_to_degrees(physics::pi), 180.0, 1e-13),
+        "radian-to-degree conversion");
+  check(near(physics::joule_to_mev(physics::mev_to_joule(2.0)), 2.0, 1e-14),
+        "MeV-to-joule round trip");
+  check(near(physics::joule_to_kev(physics::kev_to_joule(2.0)), 2.0, 1e-14),
+        "keV-to-joule round trip");
+
+  const double rest_j = physics::ev_to_joule(0.511e6);
+  const double kinetic_j = physics::mev_to_joule(1.0);
+  const double momentum =
+      physics::momentum_si(kinetic_j, rest_j);
+  const double kinetic_back =
+      physics::kinetic_energy_si(momentum, rest_j);
+  check(momentum > 0.0, "SI momentum is positive");
+  check(near(kinetic_back, kinetic_j, 1e-14),
+        "momentum/kinetic-energy round trip");
+  check(near(physics::momentum_mev_c(0.0), 0.0, 1e-15),
+        "zero kinetic energy has zero momentum");
+}
+
 void test_validation_errors() {
   Mesh mesh({0.0, 0.4, 1.0}, {0.0, 0.5, 1.1});
   CaseConfig config;
@@ -855,6 +879,7 @@ int main() {
   failures += run("repeated_boundary_updates", test_repeated_boundary_updates);
   failures += run("boundary_reference_semantics", test_boundary_reference_semantics);
   failures += run("eigen_support", test_eigen_support);
+  failures += run("physics_helpers", test_physics_helpers);
   failures += run("albert_young_loader", test_albert_young_loader);
   failures += run("strided_3d_slice_integration",
                   test_strided_3d_slice_integration);

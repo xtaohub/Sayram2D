@@ -11,11 +11,13 @@
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
+#include "physics.h"
 #include "solver.h"
 
 namespace reference {
 
-constexpr double pi = 3.141592653589793238462643383279502884;
+using sayram2d::physics::pi;
+
 
 struct CaseConfig {
   std::array<sayram2d::BCType, 4> bc{};

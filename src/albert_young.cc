@@ -4,24 +4,22 @@
 #include <cstddef>
 #include <limits>
 
+#include "physics.h"
+
 namespace sayram2d::app {
 namespace {
 
-constexpr double pi = 3.141592653589793238462643383279502884;
-constexpr double electron_rest_energy = 0.511875;  // MeV
 constexpr double epsilon = std::numeric_limits<double>::epsilon();
-
-double momentum(double energy) noexcept {
-  return std::sqrt(energy * (energy + 2.0 * electron_rest_energy));
-}
 
 }  // namespace
 
 double albert_young_initial(double alpha, double log_energy) noexcept {
   const double energy = std::exp(log_energy);
-  const double p = momentum(energy);
+  const double p = physics::momentum_mev_c(energy);
   return std::exp(-(energy - 0.2) / 0.1) *
-             (std::sin(alpha) - std::sin(5.0 * pi / 180.0)) / (p * p) +
+             (std::sin(alpha) -
+              std::sin(physics::degrees_to_radians(5.0))) /
+             (p * p) +
          epsilon;
 }
 

@@ -20,14 +20,8 @@
 #include "equation.h"
 #include "io.h"
 #include "mesh.h"
+#include "physics.h"
 #include "solver.h"
-
-namespace {
-
-constexpr double pi = 3.141592653589793238462643383279502884;
-constexpr double electron_rest_energy = 0.511875;  // MeV
-
-}  // namespace
 
 int main(int argc, char** argv) {
   if (argc > 2) {
@@ -62,10 +56,11 @@ int main(int argc, char** argv) {
     std::vector<double> log_en(n2);
     std::vector<double> times(static_cast<std::size_t>(config.n_frames));
     for (std::size_t i = 0; i < n1; ++i) {
-      alpha0_deg[i] = mesh.q1_center(i) * 180.0 / pi;
+      alpha0_deg[i] = sayram2d::physics::radians_to_degrees(mesh.q1_center(i));
     }
     for (std::size_t j = 0; j < n2; ++j) {
-      log_en[j] = mesh.q2_center(j) - std::log(electron_rest_energy);
+      log_en[j] = mesh.q2_center(j) -
+                    std::log(sayram2d::physics::electron_rest_energy_mev);
     }
     for (int frame = 0; frame < config.n_frames; ++frame) {
       times[static_cast<std::size_t>(frame)] =

@@ -15,22 +15,19 @@
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
+#include "physics.h"
 
 namespace albert_young {
 
-constexpr double pi = 3.141592653589793238462643383279502884;
-constexpr double e0 = 0.511875;  // MeV
 constexpr double eps = std::numeric_limits<double>::epsilon();
-
-inline double e2p(double energy) {
-  return std::sqrt(energy * (energy + 2.0 * e0));
-}
 
 inline double initial_value(double alpha, double log_e) {
   const double energy = std::exp(log_e);
-  const double p = e2p(energy);
+  const double p = sayram2d::physics::momentum_mev_c(energy);
   return std::exp(-(energy - 0.2) / 0.1) *
-             (std::sin(alpha) - std::sin(5.0 * pi / 180.0)) / (p * p) +
+             (std::sin(alpha) -
+              std::sin(sayram2d::physics::degrees_to_radians(5.0))) /
+             (p * p) +
          eps;
 }
 

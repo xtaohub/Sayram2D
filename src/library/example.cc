@@ -22,12 +22,12 @@
 #include "boundary_conditions.h"
 #include "equation.h"
 #include "mesh.h"
+#include "physics.h"
 #include "solver.h"
 
 int main() {
   using namespace sayram2d;
 
-  constexpr double pi = 3.141592653589793238462643383279502884;
   const std::size_t n = 50;
 
   // Uniform grid on [0,1] x [0,1].
@@ -54,7 +54,7 @@ int main() {
   // Q2Max: f = 0.
   std::vector<double> q2_min_values(n1 + 1);
   for (std::size_t i = 0; i <= n1; ++i) {
-    q2_min_values[i] = std::sin(0.5 * pi * mesh.q1_edge(i));
+    q2_min_values[i] = std::sin(0.5 * physics::pi * mesh.q1_edge(i));
   }
 
   BoundaryConditions bc;
@@ -74,7 +74,7 @@ int main() {
       const double x = mesh.q1_center(i);
       const double y = mesh.q2_center(j);
       f_in[i * n2 + j] =
-          std::exp(-y / 0.02) * std::sin(0.5 * pi * x);
+          std::exp(-y / 0.02) * std::sin(0.5 * physics::pi * x);
     }
   }
 

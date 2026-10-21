@@ -160,6 +160,32 @@ example is separate, at [`src/library/example.cc`](src/library/example.cc).
 | `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss, and a non-owning reference to the caller-owned boundary configuration. |
 | `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs one documented linear solve. |
 
+### Physics and unit helpers
+
+[`src/library/include/physics.h`](src/library/include/physics.h) provides shared
+constants and conversions:
+
+- `physics::pi`, `physics::speed_of_light`, `physics::electron_rest_energy_mev`;
+- degrees ↔ radians;
+- eV/keV/MeV ↔ joules;
+- kinetic energy ↔ momentum, in SI and in MeV/c.
+
+The momentum/energy functions take the rest energy as an explicit parameter, so
+the same helpers work for other particles:
+
+```cpp
+#include "physics.h"
+
+const double rest_energy_j = sayram2d::physics::ev_to_joule(0.511e6);
+const double momentum =
+    sayram2d::physics::momentum_si(
+        sayram2d::physics::mev_to_joule(2.0),  // kinetic energy, 2 MeV
+        rest_energy_j);
+```
+
+`physics::momentum_mev_c(kinetic_mev)` is the MeV/c convenience used by the
+Albert–Young model.
+
 ### Build the library
 
 Requirements:
