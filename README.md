@@ -47,7 +47,7 @@ default `make` builds the app directly from source, so it does not require
 | Component | Responsibility |
 |---|---|
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. |
-| `sayram2d::Array2D<T>` | Owning, contiguous, row-major 2-D array. Provides indexing, sizing, fill, iteration, and `view()`. |
+| `sayram2d::Array2D<T>` | Owning, contiguous, column-major 2-D array. Provides indexing, sizing, fill, iteration, and `view()`. |
 | `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Used by `Equation` and `Solver` and for slices of larger arrays. |
 | `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary **vertices**. |
 | `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss, and a non-owning reference to the caller-owned boundary configuration. |
@@ -73,7 +73,7 @@ read-only by multiple solvers.
 
 ### Array2D
 
-`Array2D<T>` owns contiguous, row-major 2D storage. It is the simple owning
+`Array2D<T>` owns contiguous, column-major 2D storage. It is the simple owning
 type for coefficients and fields:
 
 ```cpp
@@ -87,8 +87,15 @@ auto G_view = G.view(); // mutable view; a const Array2D gives a const view
 ```
 
 `Array2D` provides `extent1()`, `extent2()`, `size()`, `operator()`, `fill()`,
-and iteration. Its layout is always row-major, so callers do not need to
-remember how the storage was filled.
+and iteration. Its layout is always column-major:
+
+```text
+Array2D(i, j) == storage[i + j*n1]
+```
+
+This makes a fixed `q3` plane contiguous for a column-major `(q1,q2,q3)` array.
+HDF5 files remain row-major at the serialization boundary; the I/O layer
+converts explicitly.
 
 ### ArrayView2D
 
@@ -134,37 +141,37 @@ There is also a lower-level five-argument form:
 auto raw_view = make_view2d(pointer, n1, n2, stride1, stride2);
 ```
 
-The three-argument pointer form creates a contiguous row-major view:
+The three-argument pointer form creates a contiguous column-major view:
 
 ```cpp
-auto row_view = make_view2d(pointer, n1, n2);
+auto contiguous_view = make_view2d(pointer, n1, n2);
 ```
 
 #### Common 3D layouts
 
-For a 3D buffer `data[i][j][k]`, the correct offset and strides depend on the
-storage order:
-
-| Storage order | Fixed-`k` offset | `stride1` | `stride2` |
-|---|---:|---:|---:|
-| `k` fastest: `data[(i*n2 + j)*n3 + k]` | `k` | `n2*n3` | `n3` |
-| `k` slowest: `data[(k*n1 + i)*n2 + j]` | `k*n1*n2` | `n2` | `1` |
-
-The first layout is common for arrays that store several fields or energy
-channels together. The second layout makes each 2D plane contiguous.
-
-For a 4D array with the last two indices fixed, the same rule applies. If
+For the default column-major ordering with shape `(q1, q2, q3)`:
 
 ```text
-data[((i*n2 + j)*n3 + k)*n4 + l]
+data[q1 + n1*(q2 + n2*q3)]
 ```
 
-then fixing `k` and `l` gives:
+A fixed `q3 = k` plane is contiguous:
+
+| Layout | Fixed-`q3` offset | `stride1` | `stride2` |
+|---|---:|---:|---:|
+| `q3` slowest, column-major: `data[i + n1*(j + n2*k)]` | `k*n1*n2` | `1` | `n1` |
+| `q3` fastest, row-major: `data[(i*n2 + j)*n3 + k]` | `k` | `n2*n3` | `n3` |
+
+The first row is the preferred layout for L-shell parallelism: each 2D plane
+is contiguous. The second row remains available with an explicit strided view.
+
+For a 4D column-major array `(q1,q2,q3,q4)`, fixing `q3=k` and `q4=l` gives:
 
 ```cpp
-const std::ptrdiff_t offset = k*n4 + l;
-const std::ptrdiff_t stride1 = n2*n3*n4;
-const std::ptrdiff_t stride2 = n3*n4;
+const std::ptrdiff_t offset =
+    k*n1*n2 + l*n1*n2*n3;
+const std::ptrdiff_t stride1 = 1;
+const std::ptrdiff_t stride2 = n1;
 ```
 
 In general, remove the two fixed axes from the shape, keep the strides of the
@@ -172,7 +179,7 @@ two remaining axes, and add the fixed-index contributions to the data pointer.
 
 #### Complete 3D example
 
-The following uses the `k`-fastest layout:
+The following uses the column-major `(q1,q2,q3)` layout:
 
 ```cpp
 const std::size_t n3 = 8;
@@ -183,14 +190,8 @@ std::vector<double> D22(n1 * n2 * n3, 1.0);
 std::vector<double> f(n1 * n2 * n3);
 std::vector<double> f_next(n1 * n2 * n3);
 
-const Shape2 shape{n1, n2};
-const std::ptrdiff_t stride1 =
-    static_cast<std::ptrdiff_t>(n2 * n3);
-const std::ptrdiff_t stride2 = static_cast<std::ptrdiff_t>(n3);
-
 auto layer = [&](std::vector<double>& values, std::size_t k) {
-  return make_view2d(values.data() + k, shape,
-                     Strides2{stride1, stride2});
+  return make_view2d(values.data() + k * n1 * n2, n1, n2);
 };
 
 Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
@@ -523,8 +524,9 @@ invalid frame counts. Diagnostics include the configuration file and line.
 `(n1+1, n2+1)`. Cell-center coordinates are derived from the edge arrays by the
 `Mesh` constructor.
 
-Root attributes document `format_version`, row-major `i*n2+j` ordering, and
-the coordinate units. The provided file is
+HDF5 remains row-major at the file boundary: the reader converts these arrays
+into column-major `Array2D` storage. Root attributes document `format_version`,
+row-major `i*n2+j` ordering, and the coordinate units. The provided file is
 `data/albert_young/ALBERT_YOUNG_80x80.h5`, produced by
 `scripts/convert_albert_young.py`.
 
@@ -547,7 +549,8 @@ The app writes one HDF5 file:
 ```
 
 Each dataset carries a `units` attribute. Fields have shape `(n1, n2)`.
-Fields are packed row-major into an explicit buffer before HDF5 writes.
+Fields are packed row-major into an explicit buffer at the HDF5 boundary,
+even though the in-memory `Array2D`/`ArrayView2D` layout is column-major.
 
 #### Build, run, and plot
 

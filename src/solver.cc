@@ -35,8 +35,8 @@ void Solver::build_pattern() {
 
   // Every cell has a diagonal entry. Boundary Dirichlet faces also add only a
   // diagonal entry, which is already present.
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       const auto k = static_cast<int>(mesh_.cell_index({i, j}));
       triplets_.emplace_back(k, k, 1.0);
     }
@@ -45,8 +45,8 @@ void Solver::build_pattern() {
   // Each interior face contributes two off-diagonal structural entries. The
   // four numerical entries are still assembled per face; the diagonal
   // duplicates are summed by setFromTriplets().
-  for (std::size_t i = 1; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 1; i < mesh_.n1(); ++i) {
       const auto k = static_cast<int>(mesh_.cell_index({i, j}));
       const auto l = static_cast<int>(mesh_.cell_index({i - 1, j}));
       triplets_.emplace_back(k, l, 1.0);
@@ -120,8 +120,8 @@ void Solver::validate(const Equation& equation, ArrayView2D<const double> f_in,
     }
   }
 
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       const double g = G(i, j);
       const double d11 = D11(i, j);
       const double d12 = D12(i, j);
@@ -149,8 +149,8 @@ void Solver::validate(const Equation& equation, ArrayView2D<const double> f_in,
 }
 
 void Solver::update_lambda(const Equation& equation) {
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       const double g = equation.G(i, j);
       const double d11 = equation.D11(i, j);
       const double d12 = equation.D12(i, j);
@@ -165,9 +165,9 @@ void Solver::update_vertex_f(const Equation& equation,
                              ArrayView2D<const double> f_in) {
   const std::size_t n1 = mesh_.n1();
   const std::size_t n2 = mesh_.n2();
-  const std::size_t nv2 = n2 + 1;
+  const std::size_t nv1 = n1 + 1;
   auto v = [&](std::size_t i, std::size_t j) -> double& {
-    return vertex_f_[flat_index(i, j, nv2)];
+    return vertex_f_[flat_index(i, j, nv1)];
   };
   auto lerp = [](double x, double x0, double x1, double f0, double f1) {
     const double denom = x1 - x0;
@@ -185,8 +185,8 @@ void Solver::update_vertex_f(const Equation& equation,
   v(n1, n2) = f_in(n1 - 1, n2 - 1);
 
   // Interior vertices: bilinear interpolation from four surrounding cells.
-  for (std::size_t i = 1; i < n1; ++i) {
-    for (std::size_t j = 1; j < n2; ++j) {
+  for (std::size_t j = 1; j < n2; ++j) {
+    for (std::size_t i = 1; i < n1; ++i) {
       const double q1v = mesh_.q1_edge(i);
       const double q2v = mesh_.q2_edge(j);
       const double q1l = mesh_.q1_center(i - 1);
@@ -318,8 +318,8 @@ void Solver::assemble(const Equation& equation, ArrayView2D<const double> f_in,
 
   // Each interior face is processed once. Q1Min faces for i >= 1 and Q2Min
   // faces for j >= 1 cover every interior face exactly once.
-  for (std::size_t i = 1; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 1; i < mesh_.n1(); ++i) {
       const Ind k{i, j};
       const Face face_k = mesh_.face(k, Side::Q1Min);
       assert(!face_k.boundary);
@@ -383,8 +383,8 @@ void Solver::assemble(const Equation& equation, ArrayView2D<const double> f_in,
 
   // Time term: inv_tau > 0 is implicit loss; inv_tau < 0 is an explicit
   // source added to the right-hand side.
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       const Ind cell{i, j};
       const double uk = equation.G(i, j) * mesh_.cell_measure(cell) / dt;
       const double f_old = f_in(i, j);
@@ -426,8 +426,8 @@ void Solver::solve(const Equation& equation, ArrayView2D<const double> f_in,
   }
 
   // All reads of f_in are complete at this point, so f_out may alias f_in.
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       f_out(i, j) = solution_(static_cast<int>(mesh_.cell_index({i, j})));
     }
   }

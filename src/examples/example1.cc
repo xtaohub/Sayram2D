@@ -59,8 +59,8 @@ int main() {
 
   Array2D<double> f_in(n1, n2);
   Array2D<double> f_out(n1, n2, 0.0);
-  for (std::size_t i = 0; i < n1; ++i) {
-    for (std::size_t j = 0; j < n2; ++j) {
+  for (std::size_t j = 0; j < n2; ++j) {
+    for (std::size_t i = 0; i < n1; ++i) {
       const double x = mesh.q1_center(i);
       const double y = mesh.q2_center(j);
       f_in(i, j) = std::exp(-y / 0.02) * std::sin(0.5 * physics::pi * x);

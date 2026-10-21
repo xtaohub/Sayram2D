@@ -58,7 +58,7 @@ class Solver {
   double alpha_one_sided(const Face& face, const Mat2& lambda,
                          double* alpha_a, double* alpha_b) const;
   double vertex_value(VtxInd vertex) const noexcept {
-    return vertex_f_[flat_index(vertex.i, vertex.j, mesh_.n2() + 1)];
+    return vertex_f_[flat_index(vertex.i, vertex.j, mesh_.n1() + 1)];
   }
 };
 

@@ -133,8 +133,8 @@ Array2D<double> read_matrix(hid_t file, const char* name, std::size_t n1,
                        H5P_DEFAULT, row_major.data()),
                "read dataset /" + std::string(name));
   Array2D<double> matrix(n1, n2);
-  for (std::size_t i = 0; i < n1; ++i) {
-    for (std::size_t j = 0; j < n2; ++j) {
+  for (std::size_t j = 0; j < n2; ++j) {
+    for (std::size_t i = 0; i < n1; ++i) {
       matrix(i, j) = row_major[i * n2 + j];
     }
   }
@@ -237,8 +237,8 @@ void HDF5Output::write_field(std::size_t frame,
   }
 
   std::vector<double> row_major(n1_ * n2_);
-  for (std::size_t i = 0; i < n1_; ++i) {
-    for (std::size_t j = 0; j < n2_; ++j) {
+  for (std::size_t j = 0; j < n2_; ++j) {
+    for (std::size_t i = 0; i < n1_; ++i) {
       row_major[i * n2_ + j] = field(i, j);
     }
   }

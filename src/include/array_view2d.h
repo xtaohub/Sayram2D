@@ -36,9 +36,9 @@ class ArrayView2D {
               stride_type s2) noexcept
       : data_(data), n1_(n1), n2_(n2), s1_(s1), s2_(s2) {}
 
-  // Row-major contiguous view.
+  // Column-major contiguous view.
   ArrayView2D(T* data, size_type n1, size_type n2) noexcept
-      : ArrayView2D(data, n1, n2, static_cast<stride_type>(n2), 1) {}
+      : ArrayView2D(data, n1, n2, 1, static_cast<stride_type>(n1)) {}
 
   template <typename U>
   ArrayView2D(const ArrayView2D<U>& other,

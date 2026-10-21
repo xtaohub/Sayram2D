@@ -9,10 +9,10 @@
 
 namespace sayram2d {
 
-// Owning, contiguous, row-major 2D array.
+// Owning, contiguous, column-major 2D array.
 //
-// Array2D owns its storage and always uses row-major indexing:
-//   value(i, j) == storage[i * n2 + j]
+// Array2D owns its storage and always uses column-major indexing:
+//   value(i, j) == storage[i + j * n1]
 // Use view() to pass it to Equation or Solver.
 template <typename T>
 class Array2D {
@@ -32,12 +32,12 @@ class Array2D {
 
   T& operator()(size_type i, size_type j) noexcept {
     assert(i < n1_ && j < n2_);
-    return values_[i * n2_ + j];
+    return values_[i + j * n1_];
   }
 
   const T& operator()(size_type i, size_type j) const noexcept {
     assert(i < n1_ && j < n2_);
-    return values_[i * n2_ + j];
+    return values_[i + j * n1_];
   }
 
   void fill(const T& value) { std::fill(values_.begin(), values_.end(), value); }

@@ -38,8 +38,8 @@ AlbertYoungModel::AlbertYoungModel(const Mesh& mesh)
 
 Array2D<double> AlbertYoungModel::initial_field() const {
   Array2D<double> field(mesh_.n1(), mesh_.n2());
-  for (std::size_t i = 0; i < mesh_.n1(); ++i) {
-    for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+  for (std::size_t j = 0; j < mesh_.n2(); ++j) {
+    for (std::size_t i = 0; i < mesh_.n1(); ++i) {
       field(i, j) =
           albert_young_initial(mesh_.q1_center(i), mesh_.q2_center(j));
     }
