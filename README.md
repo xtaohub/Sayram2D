@@ -104,6 +104,17 @@ bridge between a 3D or 4D host array and the 2D solver. It does **not**
 represent the whole 3D array. It represents one logical 2D plane with extents
 `(n1, n2)` and two element strides.
 
+Its default contiguous layout is **column-major**:
+
+```text
+stride1 = 1
+stride2 = n1
+```
+
+`ArrayView2D` can also represent arbitrary strides, including row-major and
+noncontiguous slices, but all contiguous views created by this library use the
+column-major convention.
+
 #### Memory model
 
 ```cpp
@@ -179,24 +190,51 @@ two remaining axes, and add the fixed-index contributions to the data pointer.
 
 #### Complete 3D example
 
-The current API uses explicit views; an owning `Array3D` wrapper, if added
-later, would only hide the pointer arithmetic and return these same
-`ArrayView2D` objects.
-
-For a column-major `(q1,q2,q3)` buffer, each `q3` plane is contiguous:
+`Array3D` belongs to the 3D host code (`sayram`), not to `sayram2d`. A thin
+owning wrapper is enough:
 
 ```cpp
-const std::size_t n3 = 8;
-std::vector<double> G(n1 * n2 * n3, 1.0);
-std::vector<double> D11(n1 * n2 * n3, 1.0);
-std::vector<double> D12(n1 * n2 * n3, 0.0);
-std::vector<double> D22(n1 * n2 * n3, 1.0);
-std::vector<double> f(n1 * n2 * n3);
-std::vector<double> f_next(n1 * n2 * n3);
+// In the 3D code; not part of sayram2d.
+template <typename T>
+class Array3D {
+ public:
+  Array3D(std::size_t n1, std::size_t n2, std::size_t n3,
+          T value = T{})
+      : n1_(n1), n2_(n2), n3_(n3),
+        values_(n1 * n2 * n3, value) {}
 
-auto layer = [&](std::vector<double>& values, std::size_t k) {
-  return make_view2d(values.data() + k * n1 * n2, n1, n2);
+  T& operator()(std::size_t i, std::size_t j, std::size_t k) noexcept {
+    return values_[i + n1_ * (j + n2_ * k)];
+  }
+
+  sayram2d::ArrayView2D<T> slice2d(std::size_t k) & noexcept {
+    return {values_.data() + k * n1_ * n2_, n1_, n2_};
+  }
+
+  sayram2d::ArrayView2D<const T> slice2d(std::size_t k) const & noexcept {
+    return {values_.data() + k * n1_ * n2_, n1_, n2_};
+  }
+
+  sayram2d::ArrayView2D<T> slice2d(std::size_t) && = delete;
+  sayram2d::ArrayView2D<const T> slice2d(std::size_t) const && = delete;
+
+ private:
+  std::size_t n1_;
+  std::size_t n2_;
+  std::size_t n3_;
+  std::vector<T> values_;
 };
+```
+
+The 3D driver then becomes:
+
+```cpp
+Array3D<double> G(n1, n2, nL);
+Array3D<double> D11(n1, n2, nL);
+Array3D<double> D12(n1, n2, nL);
+Array3D<double> D22(n1, n2, nL);
+Array3D<double> f(n1, n2, nL);
+Array3D<double> f_next(n1, n2, nL);
 
 Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
 BoundaryConditions bc;           // caller-owned
@@ -206,26 +244,22 @@ BoundaryConditions bc;           // caller-owned
   Solver solver(mesh);           // one solver per worker
 
   #pragma omp for schedule(dynamic)
-  for (std::size_t k = 0; k < n3; ++k) {
-    // Cheap: stores four views and the BC reference, checks extents, and
-    // does not allocate a matrix or rebuild the sparse pattern.
-    Equation equation(layer(G, k), layer(D11, k), layer(D12, k),
-                      layer(D22, k), bc);
-    solver.solve(equation, layer(f, k), layer(f_next, k), dt);
+  for (std::size_t k = 0; k < nL; ++k) {
+    Equation equation(G.slice2d(k), D11.slice2d(k),
+                      D12.slice2d(k), D22.slice2d(k), bc);
+    solver.solve(equation, f.slice2d(k), f_next.slice2d(k), dt);
   }
 }
 ```
 
-The caller owns the 3D buffers, and the library sees only four coefficient
-views and two field views per L-shell. No 3D container is copied.
+Each `slice2d` is O(1), returns a contiguous column-major view, and copies
+nothing. `Equation` and `Solver` only see `ArrayView2D` objects.
 
-Each worker needs its own `Solver`; `Solver` is not safe for concurrent
-`solve()` calls. Coefficients may be shared read-only, and each worker writes a
-distinct output plane.
-
-If all layers use identical coefficients, the `Equation` can be constructed
-once outside the loop. For OpenMP builds, compile with the appropriate flag
-(for example `-fopenmp`) and link the OpenMP runtime.
+Each worker needs its own `Solver`; coefficients may be shared read-only, and
+each worker writes a distinct output plane. If all layers use identical
+coefficients, the `Equation` can be constructed once outside the loop. Build
+OpenMP code with the appropriate compiler and linker flags (for example
+`-fopenmp` on GCC/Clang).
 
 ### Equation
 
