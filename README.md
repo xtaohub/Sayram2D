@@ -76,21 +76,25 @@ logical shape and the index mapping. `ArrayLayout` selects that mapping:
 - `ArrayLayout::row_major`: `G[i*n2 + j]`
 - `ArrayLayout::column_major`: `G[i + j*n1]`
 
-For example, if the buffer was filled column-major:
+Fill the buffer in the same order you intend to read it. For row-major:
 
 ```cpp
-std::vector<double> G_column(n1 * n2);
-for (std::size_t j = 0; j < n2; ++j) {
-  for (std::size_t i = 0; i < n1; ++i) {
-    G_column[i + j * n1] = 1.0;
+for (std::size_t i = 0; i < n1; ++i) {
+  for (std::size_t j = 0; j < n2; ++j) {
+    G[i * n2 + j] = static_cast<double>(i + j);
   }
 }
-auto G2col = make_view2d(G_column, shape, ArrayLayout::column_major);
+auto row_view = make_view2d(G, shape);
 ```
 
-This changes how the same buffer is interpreted; it does not transpose the
-data. Do not treat a 1D profile as a 2D field unless `n×1` or `1×n` is
-genuinely what you mean.
+Calling `make_view2d(G, shape, ArrayLayout::column_major)` on the same
+row-major-filled buffer is legal, but it maps `(i,j)` to `G[i + j*n1]`. It does
+not transpose or rearrange the data; it simply applies a different indexing
+convention. Use `column_major` only when the buffer was deliberately filled as
+`G[i + j*n1]`.
+
+Do not treat a 1D profile as a 2D field unless `n×1` or `1×n` is genuinely
+what you mean.
 
 For arbitrary layouts, use the shape/stride form:
 
