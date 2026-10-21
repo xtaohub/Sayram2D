@@ -125,25 +125,7 @@ solver.solve(equation, f_in, f_out, dt);
 ```
 
 `Eigen::Block`, `Eigen::Map`, and slices of larger arrays are not implicitly
-accepted; construct an explicit `ArrayView2D`. For a block of a column-major
-Eigen matrix:
-
-```cpp
-Eigen::MatrixXd storage(n1, n2 + 1);
-auto block = storage.leftCols(n2);
-
-ArrayView2D<double> G_block(
-    block.data(),
-    static_cast<std::size_t>(block.rows()),
-    static_cast<std::size_t>(block.cols()),
-    block.innerStride(),
-    block.outerStride());
-
-// Pass G_block and analogous D11/D12/D22 views to Equation.
-```
-
-The same pattern applies to `Eigen::Map`: use its `data()`, extents,
-`innerStride()`, and `outerStride()`.
+accepted; construct an explicit `ArrayView2D` for them.
 
 #### Common 3D layouts
 
