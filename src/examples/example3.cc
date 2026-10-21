@@ -59,7 +59,7 @@ int main() {
   auto update_parameters = [&](double time) {
     const double decay = std::exp(-time / tau);
     std::fill(D11.begin(), D11.end(), decay);
-    std::fill(D12.begin(), D12.end(), 0.25 * decay);
+    std::fill(D12.begin(), D12.end(), 0.8 * decay);
     std::fill(D22.begin(), D22.end(), decay);
     bc.set_dirichlet(Side::Q1Min, 0.5 * decay);
   };
