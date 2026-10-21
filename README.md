@@ -3,7 +3,7 @@
 Sayram2D is a C++20 code for two-dimensional Fokker–Planck diffusion on
 structured, orthogonal, possibly nonuniform rectangular grids. It implements
 the positivity-preserving finite-volume NTPFA discretization described in
-[`docs/sayram2d_algorithm.tex`](docs/sayram2d_algorithm.tex).
+[`docs/sayram2d_algorithm.md`](docs/sayram2d_algorithm.md).
 
 The project provides two entry points:
 
