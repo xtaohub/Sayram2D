@@ -64,30 +64,42 @@ copying. The reverse conversion is not allowed.
 For a contiguous `std::vector`, the default is row-major:
 
 ```cpp
+std::vector<double> G(n1 * n2, 1.0);  // n1*n2 values
 const Shape2 shape{n1, n2};
-auto G2 = make_view2d(G, shape);
+auto G2 = make_view2d(G, shape);      // G2(i, j) == G[i*n2 + j]
 ```
 
-A `std::vector` is storage, not itself a 2D field. Its length must equal
-`n1 * n2`; the caller chooses the logical shape. In particular, do not treat a
-1D profile as a 2D field unless `n×1` or `1×n` is genuinely what you mean.
+A `std::vector` has no intrinsic row-major or column-major layout; it is a
+linear buffer. Its length must equal `n1 * n2`; the caller chooses both the
+logical shape and the index mapping. `ArrayLayout` selects that mapping:
 
-Use `ArrayLayout::column_major` only when the vector is actually stored in
-column-major order:
+- `ArrayLayout::row_major`: `G[i*n2 + j]`
+- `ArrayLayout::column_major`: `G[i + j*n1]`
+
+For example, if the buffer was filled column-major:
 
 ```cpp
-auto G2col = make_view2d(G, shape, ArrayLayout::column_major);
+std::vector<double> G_column(n1 * n2);
+for (std::size_t j = 0; j < n2; ++j) {
+  for (std::size_t i = 0; i < n1; ++i) {
+    G_column[i + j * n1] = 1.0;
+  }
+}
+auto G2col = make_view2d(G_column, shape, ArrayLayout::column_major);
 ```
 
 This changes how the same buffer is interpreted; it does not transpose the
-data. For arbitrary layouts, use the shape/stride form:
+data. Do not treat a 1D profile as a 2D field unless `n×1` or `1×n` is
+genuinely what you mean.
+
+For arbitrary layouts, use the shape/stride form:
 
 ```cpp
 auto view = make_view2d(pointer, Shape2{n1, n2},
                         Strides2{stride1, stride2});
 ```
 
-The lower-level five-argument form remains available:
+There is also a lower-level five-argument form:
 
 ```cpp
 auto raw_view = make_view2d(pointer, n1, n2, stride1, stride2);
@@ -95,8 +107,39 @@ auto raw_view = make_view2d(pointer, n1, n2, stride1, stride2);
 
 `Eigen::MatrixXd` has a direct convenience path: a full `MatrixXd` lvalue is
 accepted by `Equation` and `Solver` without an explicit view, using Eigen's
-column-major layout. `Eigen::Block`, `Eigen::Map`, and slices of larger arrays
-are not implicitly accepted; construct an `ArrayView2D` for them.
+column-major layout:
+
+```cpp
+Eigen::MatrixXd G(n1, n2);
+Eigen::MatrixXd D11(n1, n2);
+Eigen::MatrixXd D12(n1, n2);
+Eigen::MatrixXd D22(n1, n2);
+
+Equation equation(G, D11, D12, D22, bc);  // direct, zero-copy
+Solver solver(mesh);
+solver.solve(equation, f_in, f_out, dt);
+```
+
+`Eigen::Block`, `Eigen::Map`, and slices of larger arrays are not implicitly
+accepted; construct an explicit `ArrayView2D`. For a block of a column-major
+Eigen matrix:
+
+```cpp
+Eigen::MatrixXd storage(n1, n2 + 1);
+auto block = storage.leftCols(n2);
+
+ArrayView2D<double> G_block(
+    block.data(),
+    static_cast<std::size_t>(block.rows()),
+    static_cast<std::size_t>(block.cols()),
+    block.innerStride(),
+    block.outerStride());
+
+// Pass G_block and analogous D11/D12/D22 views to Equation.
+```
+
+The same pattern applies to `Eigen::Map`: use its `data()`, extents,
+`innerStride()`, and `outerStride()`.
 
 #### Common 3D layouts
 
