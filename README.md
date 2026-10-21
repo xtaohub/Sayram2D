@@ -179,7 +179,11 @@ two remaining axes, and add the fixed-index contributions to the data pointer.
 
 #### Complete 3D example
 
-The following uses the column-major `(q1,q2,q3)` layout:
+The current API uses explicit views; an owning `Array3D` wrapper, if added
+later, would only hide the pointer arithmetic and return these same
+`ArrayView2D` objects.
+
+For a column-major `(q1,q2,q3)` buffer, each `q3` plane is contiguous:
 
 ```cpp
 const std::size_t n3 = 8;
@@ -196,38 +200,32 @@ auto layer = [&](std::vector<double>& values, std::size_t k) {
 
 Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
 BoundaryConditions bc;           // caller-owned
-Solver solver(mesh);
 
-for (std::size_t k = 0; k < n3; ++k) {
-  // Cheap: stores four views and the BC reference, checks extents, and does
-  // not allocate a matrix or rebuild the sparse pattern.
-  Equation equation(layer(G, k), layer(D11, k), layer(D12, k),
-                    layer(D22, k), bc);
-  solver.solve(equation, layer(f, k), layer(f_next, k), dt);
+#pragma omp parallel
+{
+  Solver solver(mesh);           // one solver per worker
+
+  #pragma omp for schedule(dynamic)
+  for (std::size_t k = 0; k < n3; ++k) {
+    // Cheap: stores four views and the BC reference, checks extents, and
+    // does not allocate a matrix or rebuild the sparse pattern.
+    Equation equation(layer(G, k), layer(D11, k), layer(D12, k),
+                      layer(D22, k), bc);
+    solver.solve(equation, layer(f, k), layer(f_next, k), dt);
+  }
 }
 ```
 
-No 3D container is copied or interpreted by the library. The caller controls
-the layout, and the library only sees four coefficient views and two field
-views.
+The caller owns the 3D buffers, and the library sees only four coefficient
+views and two field views per L-shell. No 3D container is copied.
+
+Each worker needs its own `Solver`; `Solver` is not safe for concurrent
+`solve()` calls. Coefficients may be shared read-only, and each worker writes a
+distinct output plane.
 
 If all layers use identical coefficients, the `Equation` can be constructed
-once outside the loop. `Solver` is reusable across sequential layers on the
-same mesh. The solve dominates the cost; constructing `Equation` per layer is
-nearly free.
-
-#### Parallel 3D solves
-
-The natural parallel unit is a 2D plane:
-
-- each worker processes a different `k` (or `(k,l)` in 4D);
-- each worker needs its own `Solver`; a `Solver` is not safe for concurrent
-  `solve()` calls;
-- coefficient planes may be shared read-only;
-- each worker writes to a distinct output plane.
-
-The caller is responsible for keeping the parent arrays and the
-`BoundaryConditions` object alive for the duration of every solve.
+once outside the loop. For OpenMP builds, compile with the appropriate flag
+(for example `-fopenmp`) and link the OpenMP runtime.
 
 ### Equation
 
