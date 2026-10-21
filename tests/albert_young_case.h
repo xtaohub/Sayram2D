@@ -100,7 +100,7 @@ inline Data load_data(const std::string& path) {
 
 // Owns the converted cell-centered arrays and the objects whose views point
 // into them. No diffusion-coefficient interpolation or unit conversion occurs
-// here; that work is done by tools/convert_albert_young.py.
+// here; that work is done by scripts/convert_albert_young.py.
 class Case {
  public:
   explicit Case(const std::string& path)

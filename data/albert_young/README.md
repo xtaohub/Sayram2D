@@ -11,7 +11,7 @@ data/raw/AlbertYoung_chorus.h5
   /Dpp     (91,49)  raw energy/momentum diffusion
 ```
 
-`tools/convert_albert_young.py` interpolates these tables once onto a chosen
+`scripts/convert_albert_young.py` interpolates these tables once onto a chosen
 Sayram2D cell-center grid and writes the **cell-centered, simulation-ready**
 arrays `G`, `D11`, `D12`, `D22` directly. The C++ cases and the standalone
 application (`src/app/`) load those arrays; they do not interpolate or convert
@@ -33,7 +33,7 @@ E in [0.2, 5] MeV, log-spaced, n2 = 80
 Reproduce both with:
 
 ```bash
-python3 tools/convert_albert_young.py \
+python3 scripts/convert_albert_young.py \
   --input data/raw/AlbertYoung_chorus.h5 \
   --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
   --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \

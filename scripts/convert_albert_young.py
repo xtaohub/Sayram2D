@@ -26,7 +26,7 @@ also be written for the pre-existing regression harness:
 q1 is alpha0 in radians; q2 is log(E), with E in MeV.
 
 Example:
-  python3 tools/convert_albert_young.py \
+  python3 scripts/convert_albert_young.py \
     --input data/raw/AlbertYoung_chorus.h5 \
     --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
     --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \

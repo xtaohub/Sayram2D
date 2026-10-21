@@ -39,8 +39,8 @@ the `HDF5_INCLUDE` and `HDF5_LIBDIR` variables at the top of the
 With CMake:
 
 ```bash
-cmake -S . -B build-cmake
-cmake --build build-cmake
+cmake -S . -B build
+cmake --build build
 ./sayram2d app.ini
 ```
 
@@ -98,7 +98,7 @@ invalid frame counts. Diagnostics include the configuration file and line.
 Root attributes document `format_version`, row-major `i*n2+j` ordering, and
 the coordinate units. The provided file is
 `data/albert_young/ALBERT_YOUNG_80x80.h5`, produced by
-`tools/convert_albert_young.py`.
+`scripts/convert_albert_young.py`.
 
 The Albert–Young initial distribution and boundary functions are built into
 the application; boundary conditions are not configured through the INI in
@@ -382,9 +382,9 @@ make -f Makefile.benchmark
 CMake/CTest:
 
 ```bash
-cmake -S . -B build-cmake
-cmake --build build-cmake
-ctest --test-dir build-cmake --output-on-failure
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
 `make -f Makefile.tests` includes unit tests, legacy numerical comparisons,
@@ -393,7 +393,7 @@ the Albert–Young regression, and standalone-app/HDF5 checks. The root
 
 ## Albert–Young data
 
-The raw tables are interpolated once by `tools/convert_albert_young.py` into
+The raw tables are interpolated once by `scripts/convert_albert_young.py` into
 `data/albert_young/ALBERT_YOUNG_80x80.h5`. The app consumes that file directly
 and does not interpolate coefficients. See
 [`data/albert_young/README.md`](data/albert_young/README.md) for units,
@@ -421,14 +421,13 @@ src/include/        public headers
 src/                implementation and main.cc example
 src/app/            standalone Albert-Young application
 config/             example case configurations
-scripts/            plotting utilities
+scripts/            data conversion and plotting
 figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks
   legacy/           frozen pre-redesign source and reference outputs
   albert_young/     legacy and new Albert-Young reference outputs
 data/raw/           raw Albert-Young HDF5 input
 data/albert_young/  preprocessed cell-centered G/D data
-tools/              data-conversion tools
 docs/               numerical algorithm and design notes
 ```
 
