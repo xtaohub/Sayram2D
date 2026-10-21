@@ -257,8 +257,8 @@ const double momentum =
         rest_energy_j);
 ```
 
-`physics::momentum_mev_c(kinetic_mev)` is the MeV/c convenience used by the
-Albert–Young model.
+`physics::momentum_mev_c(kinetic_mev)` returns momentum in MeV/c and is the
+convenience function used by the Albert–Young model.
 
 ### Ownership and lifetime
 
