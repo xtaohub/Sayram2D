@@ -94,8 +94,7 @@ Array2D(i, j) == storage[i + j*n1]
 ```
 
 This makes a fixed `q3` plane contiguous for a column-major `(q1,q2,q3)` array.
-HDF5 files remain row-major at the serialization boundary; the I/O layer
-converts explicitly.
+HDF5 output follows the same convention.
 
 ### ArrayView2D
 
@@ -524,9 +523,8 @@ invalid frame counts. Diagnostics include the configuration file and line.
 `(n1+1, n2+1)`. Cell-center coordinates are derived from the edge arrays by the
 `Mesh` constructor.
 
-HDF5 remains row-major at the file boundary: the reader converts these arrays
-into column-major `Array2D` storage. Root attributes document `format_version`,
-row-major `i*n2+j` ordering, and the coordinate units. The provided file is
+Root attributes document `format_version`, column-major `i+j*n1` ordering,
+and the coordinate units. The provided file is
 `data/albert_young/ALBERT_YOUNG_80x80.h5`, produced by
 `scripts/convert_albert_young.py`.
 
@@ -549,8 +547,8 @@ The app writes one HDF5 file:
 ```
 
 Each dataset carries a `units` attribute. Fields have shape `(n1, n2)`.
-Fields are packed row-major into an explicit buffer at the HDF5 boundary,
-even though the in-memory `Array2D`/`ArrayView2D` layout is column-major.
+Fields are written as column-major buffers, matching
+`Array2D`/`ArrayView2D`.
 
 #### Build, run, and plot
 

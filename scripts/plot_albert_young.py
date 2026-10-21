@@ -33,7 +33,15 @@ ENERGIES = (0.5, 2.0)
 FRAMES = ((1, "0.1 day"), (10, "1 day"))
 
 
-def load(path: Path, field_group: str, energy_coordinate: str):
+def read_matrix(dataset, order: str):
+    values = np.asarray(dataset)
+    if order == "F":
+        return values.reshape(-1).reshape(values.shape, order="F")
+    return values
+
+
+def load(path: Path, field_group: str, energy_coordinate: str,
+         matrix_order: str):
     with h5py.File(path, "r") as handle:
         alpha = handle["alpha0"][...]
         if energy_coordinate == "logEN":
@@ -42,7 +50,7 @@ def load(path: Path, field_group: str, energy_coordinate: str):
         else:
             log_e = handle[energy_coordinate][...]
         fields = {
-            index: handle[f"{field_group}/{index}"][...]
+            index: read_matrix(handle[f"{field_group}/{index}"], matrix_order)
             for index, _ in FRAMES
         }
     return alpha, log_e, fields
@@ -62,8 +70,8 @@ def main() -> int:
     parser.add_argument("--outdir", type=Path, default=Path("figures"))
     args = parser.parse_args()
 
-    alpha_new, logen_new, new_fields = load(args.new, "PSD", "logE")
-    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy, "f", "logEN")
+    alpha_new, logen_new, new_fields = load(args.new, "PSD", "logE", "F")
+    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy, "f", "logEN", "C")
     if not np.allclose(alpha_new, alpha_legacy):
         raise SystemExit("alpha0 grids differ between new and legacy outputs")
     if not np.allclose(logen_new, logen_legacy):

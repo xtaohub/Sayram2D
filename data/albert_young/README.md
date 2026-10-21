@@ -55,7 +55,7 @@ Root attributes:
 
 ```text
 format_version = 1
-index_order = "row-major i*n2+j"
+index_order = "column-major i+j*n1"
 q1_units = "rad"
 q2_units = "log(E/MeV)"
 coefficient_location = "cell centers"
@@ -63,8 +63,8 @@ coefficient_location = "cell centers"
 
 `G[i,j]`, `D11[i,j]`, etc. are defined at cell centers and have shape
 `(n1, n2)`. They are not vertex-centered arrays and must not have shape
-`(n1+1, n2+1)`. The application reads the HDF5 datasets explicitly by name;
-the on-disk order is documented rather than inferred from array layout.
+`(n1+1, n2+1)`. The HDF5 flat buffer uses column-major order, matching
+`Array2D`; the application reads the datasets explicitly by name.
 
 ### Legacy regression binary
 
@@ -78,7 +78,7 @@ float64 q1_edges[n1+1]
 float64 q2_edges[n2+1]
 float64 q1_centers[n1]
 float64 q2_centers[n2]
-float64 G[n1*n2]       row-major, index i*n2+j
+float64 G[n1*n2]       row-major, index i*n2+j (legacy binary)
 float64 D11[n1*n2]
 float64 D12[n1*n2]
 float64 D22[n1*n2]

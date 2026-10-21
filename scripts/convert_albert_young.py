@@ -10,7 +10,7 @@ The primary output is a self-describing HDF5 file:
 
   /q1_edges        float64[n1+1]   alpha0 in radians
   /q2_edges        float64[n2+1]   log(E/MeV)
-  /G               float64[n1,n2]  cell-centered, row-major, index i*n2+j
+  /G               float64[n1,n2]  cell-centered, column-major, index i+j*n1
   /D11             float64[n1,n2]
   /D12             float64[n1,n2]
   /D22             float64[n1,n2]
@@ -161,7 +161,7 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with h5py.File(output, "w") as handle:
         handle.attrs["format_version"] = 1
-        handle.attrs["index_order"] = "row-major i*n2+j"
+        handle.attrs["index_order"] = "column-major i+j*n1"
         handle.attrs["q1_units"] = "rad"
         handle.attrs["q2_units"] = "log(E/MeV)"
         handle.attrs["coefficient_location"] = "cell centers"
@@ -173,7 +173,11 @@ def main() -> None:
             ("D12", D12),
             ("D22", D22),
         ):
-            handle.create_dataset(name, data=np.asarray(array, dtype=np.float64))
+            values = np.asarray(array, dtype=np.float64)
+            if values.ndim == 2:
+                # Store the flat buffer in column-major order.
+                values = values.flatten(order="F").reshape(values.shape)
+            handle.create_dataset(name, data=values)
 
     print(f"wrote {output}")
 
