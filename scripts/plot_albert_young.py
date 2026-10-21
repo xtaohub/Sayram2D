@@ -49,7 +49,7 @@ def profile(field: np.ndarray, log_en: np.ndarray, energy: float) -> np.ndarray:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--new", type=Path,
-                        default=Path("output/AlbertYoung1day/AlbertYoung1day_data.h5"))
+                        default=Path("output/AlbertYoung/AlbertYoung_data.h5"))
     parser.add_argument("--legacy", type=Path,
                         default=Path("tests/albert_young/legacy_reference_1day.h5"))
     parser.add_argument("--outdir", type=Path, default=Path("figures"))

@@ -61,7 +61,7 @@ data_file = data/albert_young/ALBERT_YOUNG_80x80.h5
 
 [time]
 dt = 0.002
-nsteps = 10
+nsteps = 500
 
 [output]
 n_frames = 11
@@ -131,9 +131,9 @@ make -f Makefile.case plot     # run and write figures/*.pdf and *.png
 make -f Makefile.case help
 ```
 
-It uses [`config/albert_young_1day.ini`](config/albert_young_1day.ini):
-`dt = 0.002` days, `nsteps = 500`, and 11 frames at 0, 0.1, ..., 1.0 day.
-The result is `output/AlbertYoung1day/AlbertYoung1day_data.h5`.
+It uses [`app.ini`](app.ini): `dt = 0.002` days, `nsteps = 500`, and
+11 frames at 0, 0.1, ..., 1.0 day. The single result is
+`output/AlbertYoung/AlbertYoung_data.h5`, containing both time slices.
 
 The plot compares this result with the committed legacy 1-day reference
 [`tests/albert_young/legacy_reference_1day.h5`](tests/albert_young/legacy_reference_1day.h5)
@@ -420,7 +420,6 @@ src/io.*            application HDF5 I/O
 src/albert_young.*  application physics preset
 src/library/        numerical library and its example
 src/library/include public library headers
-config/             example case configurations
 scripts/            data conversion and plotting
 figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks

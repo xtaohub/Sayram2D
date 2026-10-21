@@ -6,9 +6,9 @@
 # Override paths on the command line if needed:
 #   make -f Makefile.case CONFIG=my.ini NEW_H5=... plot
 
-CONFIG     ?= config/albert_young_1day.ini
+CONFIG     ?= app.ini
 APP        ?= ./sayram2d
-NEW_H5     ?= output/AlbertYoung1day/AlbertYoung1day_data.h5
+NEW_H5     ?= output/AlbertYoung/AlbertYoung_data.h5
 LEGACY_H5  ?= tests/albert_young/legacy_reference_1day.h5
 FIGDIR     ?= figures
 PYTHON     ?= python3
