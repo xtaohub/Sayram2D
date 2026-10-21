@@ -447,6 +447,20 @@ The standalone application is a worked Albert–Young example. It adds INI
 configuration on top of the library, and HDF5 input/output for the coefficient
 tables and saved distributions. It is not required to use the core library.
 
+The INI file exists so that run parameters can change without recompiling:
+time step, number of steps, saved-frame count, input data path, run ID, and
+output directory. This lets one executable serve many runs, keeps case
+definitions reproducible, and makes batch runs scriptable. The Albert–Young
+initial distribution, boundary functions, and coefficient interpretation remain
+compiled into the example.
+
+The HDF5 I/O layer in
+[`src/examples/albert_young/io.h`](src/examples/albert_young/io.h) is separate
+from the solver and reads/writes named mesh, coefficient, and field arrays. It
+can be reused or adapted for other realistic 2D diffusion applications; its
+current dataset names and output schema are specific to this Albert–Young case.
+The INI parser follows the same application-layer pattern.
+
 #### Build and run
 
 ```bash
