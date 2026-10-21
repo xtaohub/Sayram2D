@@ -390,18 +390,20 @@ cmake --build build --target sayram2d_example1
 ### Example 2: time-dependent coefficients and boundary conditions
 
 [`src/examples/example2.cc`](src/examples/example2.cc) shows how to change the
-diffusion coefficients and a Dirichlet boundary value during a simulation.
+diffusion coefficients and a Dirichlet boundary array during a simulation.
 
 - The 50×50 grid advances for 100 steps with `dt = 0.01`.
 - `D11`, `D12`, and `D22` decay as `exp(-t/tau)` with `tau = 10`.
-- The `Q1Min` Dirichlet value follows the same slow decay.
+- The `Q1Min` Dirichlet boundary is a 1D array over the `n2 + 1` boundary
+  vertices, with a fixed spatial profile multiplied by the same decay factor.
 - At `t = 1`, the decay factor is still about `0.905`, so neither the
   coefficients nor the boundary value collapse to zero.
 
 The `Equation` is constructed once. Its coefficient views remain valid while the
 underlying `Array2D` objects are updated in place, and its boundary reference
-sees changes to `BoundaryConditions`. The example prints `D11`, the Dirichlet
-value, and the field minimum/maximum at `t = 0`, `0.5`, and `1`.
+sees changes to the `q1_min_values` vector passed to `BoundaryConditions`. The
+example prints `D11`, the midpoint Dirichlet value, and the field
+minimum/maximum at `t = 0`, `0.5`, and `1`.
 
 ```bash
 make example2
