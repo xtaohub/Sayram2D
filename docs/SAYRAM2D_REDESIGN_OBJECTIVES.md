@@ -1,5 +1,11 @@
 # Sayram2D Redesign: Objectives and Design Principles
 
+> **Historical design document.** It records the original redesign objectives.
+> The current implementation uses `Array2D`/`ArrayView2D` with Eigen kept for
+> internal sparse linear algebra. Some proposed interfaces, such as Python
+> bindings, were not implemented. Treat this as design history, not current API
+> documentation.
+
 ## Purpose
 
 Redesign Sayram2D as a modular, reusable C++ solver for two-dimensional Fokker–Planck (FP) diffusion equations. The numerical core should serve both standalone simulations and as a component within higher-dimensional models, while exposing convenient Python and C++ command-line interfaces.

@@ -606,7 +606,7 @@ ctest --test-dir build --output-on-failure
 
 The registered tests include unit tests, legacy numerical comparisons, the
 Albert–Young regression, and standalone-app/HDF5 checks. The root `Makefile`
-only builds the `sayram2d` app and the library.
+builds the `sayram2d` app, the library, and the examples.
 
 ## Repository layout
 

@@ -64,7 +64,7 @@ coefficient_location = "cell centers"
 `G[i,j]`, `D11[i,j]`, etc. are defined at cell centers and have shape
 `(n1, n2)`. They are not vertex-centered arrays and must not have shape
 `(n1+1, n2+1)`. The application reads the HDF5 datasets explicitly by name;
-the on-disk order is documented rather than inferred from Eigen layout.
+the on-disk order is documented rather than inferred from array layout.
 
 ### Legacy regression binary
 

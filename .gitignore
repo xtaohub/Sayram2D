@@ -19,6 +19,8 @@ docs/texput.*
 docs/.vscode/
 
 tests/albert_young/new_reference.csv
+tests/results/
+tests/legacy/results/
 CMakeFiles/
 CMakeCache.txt
 albert_young_example.csv
