@@ -11,6 +11,37 @@ application is one example; HDF5 is used by that example, not by the library.
 
 ## 1. Core library
 
+### Build the library
+
+Requirements:
+
+- C++20 compiler
+- Eigen 3.4 or later (header-only)
+- GNU Make
+- `ar` only when building the static library
+- HDF5 C headers/libraries only for the standalone application
+
+The compiler, Eigen, and HDF5 paths are the four variables at the top of the
+[`Makefile`](Makefile). Edit them once for your machine if needed.
+
+Build the standalone app (the default target):
+
+```bash
+make
+```
+
+Build the optional static library:
+
+```bash
+make lib
+```
+
+The library itself does not require HDF5. `make lib` uses `ar` to archive the
+compiled objects into `libsayram2d.a`; the examples link that archive. The
+default `make` builds the app directly from source, so it does not require
+`ar`.
+
+
 ### Components
 
 | Component | Responsibility |
@@ -273,6 +304,10 @@ same storage may be used for both arguments for an in-place solve. A `Solver`
 is reusable across sequential solves on the same mesh, but it must not be used
 concurrently from multiple threads.
 
+The discretization, positivity-preserving flux construction, and matrix
+assembly are described in
+[`docs/sayram2d_algorithm.md`](docs/sayram2d_algorithm.md).
+
 ### Physics and unit helpers
 
 [`src/library/include/physics.h`](src/library/include/physics.h) provides shared
@@ -299,36 +334,6 @@ const double momentum =
 `physics::momentum_mev_c(kinetic_mev)` is the MeV/c convenience used by the
 Albert–Young model.
 
-### Build the library
-
-Requirements:
-
-- C++20 compiler
-- Eigen 3.4 or later (header-only)
-- GNU Make
-- `ar` only when building the static library
-- HDF5 C headers/libraries only for the standalone application
-
-The compiler, Eigen, and HDF5 paths are the four variables at the top of the
-[`Makefile`](Makefile). Edit them once for your machine if needed.
-
-Build the standalone app (the default target):
-
-```bash
-make
-```
-
-Build the optional static library:
-
-```bash
-make lib
-```
-
-The library itself does not require HDF5. `make lib` uses `ar` to archive the
-compiled objects into `libsayram2d.a`; the examples link that archive. The
-default `make` builds the app directly from source, so it does not require
-`ar`.
-
 ### Ownership and lifetime
 
 - `Mesh` owns its geometry and is immutable after construction. It may be
@@ -342,28 +347,6 @@ default `make` builds the app directly from source, so it does not require
   matrices or a temporary `BoundaryConditions` is rejected at compile time.
 - `ArrayView2D` never allocates or copies.
 - In-place solves `solver.solve(eq, f, f, dt)` are supported.
-
-### Indexing and strides
-
-- `ArrayView2D<T>::operator()(i, j)` addresses
-  `data()[i * stride1() + j * stride2()]`.
-- `Eigen::MatrixXd` is column-major and maps to `stride1 = 1`,
-  `stride2 = rows` without copying.
-- The application's HDF5 input uses named datasets and explicit `(i,j)`
-  correspondence; file order is never inferred from Eigen layout.
-- Higher-dimensional slices, `Eigen::Block`/`Eigen::Map`, and other containers
-  must construct an `ArrayView2D` with explicit extents and strides.
-
-### Numerical method
-
-- One linear solve per time step; no nonlinear iteration.
-- Each interior face is processed once with paired matrix entries.
-- Positive inverse loss is implicit; negative inverse loss is an explicit
-  right-hand-side source.
-- The matrix is generally nonsymmetric and is solved with `Eigen::SparseLU`.
-
-The solver agrees with the saved legacy outputs for zero and positive inverse
-loss to roundoff (maximum observed difference about `2e-15`).
 
 ### Concurrency
 
