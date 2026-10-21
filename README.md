@@ -310,7 +310,7 @@ assembly are described in
 
 ### Physics and unit helpers
 
-[`src/library/include/physics.h`](src/library/include/physics.h) provides shared
+[`src/include/physics.h`](src/include/physics.h) provides shared
 constants and conversions:
 
 - `physics::pi`, `physics::speed_of_light`, `physics::electron_rest_energy_mev`;
@@ -575,7 +575,7 @@ at 0.5 and 2 MeV for 0.1 and 1 day:
 
 PDF versions are alongside them.
 
-The application entry point is [`src/main.cc`](src/main.cc). The
+The application entry point is [`src/examples/albert_young/main.cc`](src/examples/albert_young/main.cc). The
 dependency-free library examples are separate, under [`src/examples/`](src/examples/).
 
 #### Data
@@ -591,9 +591,9 @@ formulas, and the HDF5 layout.
 The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
 file-format or configuration dependency. The application owns:
 
-- `src/config.cc` — strict INI parser;
-- `src/io.cc` — HDF5 reader/writer using the native C API;
-- `src/albert_young.cc` — built-in initial and boundary functions.
+- `src/examples/albert_young/config.cc` — strict INI parser;
+- `src/examples/albert_young/io.cc` — HDF5 reader/writer using the native C API;
+- `src/examples/albert_young/albert_young.cc` — built-in initial and boundary functions.
 
 The converter and regression tools remain outside the library.
 
@@ -615,13 +615,11 @@ only builds the `sayram2d` app and the library.
 
 ```text
 Makefile            sayram2d app, library, and examples
-src/main.cc         Albert–Young example entry point
-src/config.*        application configuration
-src/io.*            application HDF5 I/O
-src/albert_young.*  application physics preset
-src/library/        numerical library
-src/library/include public library headers
-src/examples/       runnable library examples
+src/*.cc            numerical library implementation
+src/include/        public library headers
+src/examples/       example1.cc and example_eigen.cc
+src/examples/albert_young/
+                    Albert–Young application and case files
 scripts/            data conversion and plotting
 figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks

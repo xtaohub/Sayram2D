@@ -22,12 +22,12 @@ if(NOT TARGET Eigen3::Eigen)
 endif()
 
 add_library(sayram2d
-  src/library/mesh.cc
-  src/library/boundary_conditions.cc
-  src/library/solver.cc
+  src/mesh.cc
+  src/boundary_conditions.cc
+  src/solver.cc
 )
 target_include_directories(sayram2d PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/library/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 if(TARGET Eigen3::Eigen)
   target_link_libraries(sayram2d PUBLIC Eigen3::Eigen)
@@ -75,12 +75,12 @@ if(SAYRAM2D_BUILD_APP)
   endif()
 
   add_library(sayram2d_app_core STATIC
-    src/config.cc
-    src/io.cc
-    src/albert_young.cc
+    src/examples/albert_young/config.cc
+    src/examples/albert_young/io.cc
+    src/examples/albert_young/albert_young.cc
   )
   target_include_directories(sayram2d_app_core PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/albert_young
   )
   target_link_libraries(sayram2d_app_core PUBLIC sayram2d)
   if(TARGET HDF5::HDF5)
@@ -94,7 +94,7 @@ if(SAYRAM2D_BUILD_APP)
     target_compile_options(sayram2d_app_core PRIVATE -Wall -Wextra)
   endif()
 
-  add_executable(sayram2d_cli src/main.cc)
+  add_executable(sayram2d_cli src/examples/albert_young/main.cc)
   target_link_libraries(sayram2d_cli PRIVATE sayram2d_app_core)
   set_target_properties(sayram2d_cli PROPERTIES
     OUTPUT_NAME sayram2d

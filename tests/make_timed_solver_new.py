@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a timing-instrumented copy of src/library/solver.cc for benchmarking.
+"""Create a timing-instrumented copy of src/solver.cc for benchmarking.
 
 Only std::chrono instrumentation is inserted; numerical code is copied
 verbatim. The generated file is a build artifact and is not committed.
@@ -8,7 +8,7 @@ verbatim. The generated file is a build artifact and is not committed.
 from pathlib import Path
 import sys
 
-src = Path("src/library/solver.cc").read_text()
+src = Path("src/solver.cc").read_text()
 
 needle = '#include "solver.h"\n'
 if needle not in src:
