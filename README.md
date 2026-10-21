@@ -17,8 +17,8 @@ For questions about using Sayram2D or inquiries regarding potential
 collaborations, please contact Xin Tao at xtao@ustc.edu.cn.
 
 If you use Sayram2D in your research, coauthorship with Xin Tao or any other
-Sayram2D developer is not required. However, please cite the following
-reference:
+Sayram2D developer is not required. We would, however, appreciate a citation
+to the following reference:
 
 > Peng, P., Tao, X., Peng, Z., Jiang, Y., Gao, Z., Yang, D., et al. (2024).
 > Modeling radiation belt dynamics using a positivity-preserving finite volume
