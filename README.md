@@ -33,9 +33,13 @@ Requirements:
 
 - C++20 compiler
 - Eigen 3.4 or later (header-only)
-- GNU Make
-- `ar` only when building the static library
+- CMake 3.16 or later, or GNU Make
+- `ar` only when building the static library with Make
 - HDF5 C headers/libraries only for the standalone application
+
+The build can be done with either GNU Make or CMake.
+
+#### Method 1: GNU Make
 
 The compiler, Eigen, and HDF5 settings are the variables at the top of the
 [`Makefile`](Makefile). Edit them once for your machine if needed.
@@ -57,6 +61,24 @@ compiled objects into `libsayram2d.a`; the examples link that archive. The
 default `make` builds the app directly from source, so it does not require
 `ar`.
 
+#### Method 2: CMake
+
+Build the standalone app:
+
+```bash
+cmake -S . -B build
+cmake --build build
+```
+
+Build only the core library, without the HDF5 application:
+
+```bash
+cmake -S . -B build -DSAYRAM2D_BUILD_APP=OFF
+cmake --build build --target sayram2d
+```
+
+The library target is `sayram2d`. CMake also builds the lightweight examples;
+the app target is `sayram2d_cli`.
 
 ### Components
 
