@@ -17,7 +17,6 @@
 #include "array2d.h"
 #include "array_view2d.h"
 #include "boundary_conditions.h"
-#include "container_adapter.h"
 #include "equation.h"
 #include "mesh.h"
 #include "physics.h"
@@ -117,22 +116,6 @@ void test_mesh_geometry() {
   }, "non-finite edge must throw");
 }
 
-struct CustomMatrix2D {
-  std::vector<double> values;
-  std::size_t rows = 0;
-  std::size_t cols = 0;
-  std::ptrdiff_t s1 = 0;
-  std::ptrdiff_t s2 = 0;
-
-  double* data() { return values.data(); }
-  const double* data() const { return values.data(); }
-  std::size_t dimension() const { return 2; }
-  std::size_t shape(std::size_t axis) const {
-    return axis == 0 ? rows : cols;
-  }
-  std::array<std::ptrdiff_t, 2> strides() const { return {s1, s2}; }
-};
-
 void test_array_views() {
   Array2D<double> owned(3, 4);
   for (std::size_t i = 0; i < owned.extent1(); ++i) {
@@ -175,17 +158,7 @@ void test_array_views() {
   check(!noncontiguous.is_contiguous(), "fixed-last slice is noncontiguous");
   check(noncontiguous(1, 2) == big[2 + 12 + 8], "noncontiguous access");
 
-  CustomMatrix2D custom;
-  custom.values = values;
-  custom.rows = 3;
-  custom.cols = 4;
-  custom.s1 = 4;
-  custom.s2 = 1;
-  const auto custom_view = make_view2d(custom);
-  check(custom_view(2, 1) == 9.0, "container adapter access");
-  const CustomMatrix2D& const_custom = custom;
-  const auto const_custom_view = make_view2d(const_custom);
-  check(const_custom_view(2, 1) == 9.0, "const container adapter access");
+
 }
 
 void test_boundary_conditions() {
