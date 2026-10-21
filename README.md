@@ -601,6 +601,54 @@ coefficients, the `Equation` can be constructed once outside the loop. Build
 OpenMP code with the appropriate compiler and linker flags (for example
 `-fopenmp` on GCC/Clang).
 
+## 4. Python bindings
+
+The optional Python extension exposes `Mesh`, `BoundaryConditions`, `Equation`,
+`Solver`, and `Side`. It links the C++ library and requires pybind11.
+
+Build it with:
+
+```bash
+python3 -m pip install pybind11
+cmake -S . -B build-python \
+  -DSAYRAM2D_BUILD_PYTHON=ON \
+  -DSAYRAM2D_BUILD_APP=OFF \
+  -DBUILD_TESTING=OFF \
+  -Dpybind11_DIR="$(python3 -m pybind11 --cmakedir)"
+cmake --build build-python
+```
+
+Run the time-dependent example:
+
+```bash
+PYTHONPATH=build-python/python \
+  python3 python/example_time_dependent.py
+```
+
+The binding requires 2D NumPy arrays in Fortran order:
+
+```python
+G = np.asfortranarray(G)
+assert G.flags.f_contiguous
+```
+
+Coefficient arrays are held by the `Equation` wrapper. Update them in place:
+
+```python
+D11[:, :] = decay
+D12[:, :] = 0.8 * decay
+D22[:, :] = decay
+```
+
+Do not reassign `D11 = ...` after constructing the equation; rebuild the
+equation if you need new buffers. Boundary arrays passed to
+`BoundaryConditions.set_dirichlet` are copied, so they can be updated and passed
+again each time step.
+
+`python/example_time_dependent.py` demonstrates the full workflow, including
+time-dependent diffusion coefficients and a time-dependent `Q1Min` Dirichlet
+array.
+
 ## Repository layout
 
 ```text
@@ -615,6 +663,7 @@ scripts/            data conversion and plotting
 figures/            generated comparison figures
 data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
+python/             optional pybind11 extension and Python example
 ```
 
 ## License and citation
