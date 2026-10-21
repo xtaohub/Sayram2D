@@ -371,8 +371,8 @@ application.
 This code is not part of the numerical library and is not required by library
 users. It is kept separate so that other realistic 2D applications can reuse
 the configuration and I/O patterns. `HDF5Output` accepts `HDF5OutputNames`, so
-the coordinate, time, and field dataset names are configurable; the
-Albert–Young example passes `alpha0`, `logEN`, `t`, and `f`.
+the coordinate, time, and field dataset names are configurable. The defaults
+are the Albert–Young names: `alpha0`, `logEN`, `t`, and `PSD`.
 
 ### Example 1: vector-based PPFV
 
@@ -469,8 +469,8 @@ compiled into the example.
 
 The generic HDF5 I/O layer in [`src/app/io.h`](src/app/io.h) is separate from
 the solver and reads/writes named mesh, coefficient, and field arrays. The
-writer takes configurable dataset names; the Albert–Young driver supplies its
-own `alpha0`/`logEN`/`t`/`f` layout. The INI parser is similarly reusable.
+writer takes configurable dataset names; by default the Albert–Young layout is
+`alpha0`/`logEN`/`t`/`PSD`. The INI parser is similarly reusable.
 
 Application support types (`Config`, `InputData`, `HDF5Output`) are in
 `sayram2d::app`. The Albert–Young model and initial/boundary functions are in
@@ -573,8 +573,8 @@ The app writes one HDF5 file:
   /alpha0     pitch-angle cell centers, degrees
   /logEN      log(E/MeV) - log(0.511875)
   /t          saved times in days, including 0 and nsteps*dt
-  /f/0        initial distribution
-  /f/1        first saved distribution
+  /PSD/0      initial distribution
+  /PSD/1      first saved distribution
   ...
 ```
 

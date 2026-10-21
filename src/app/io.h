@@ -32,10 +32,10 @@ InputData load_input(const std::filesystem::path& path);
 // Dataset names used by HDF5Output. Defaults are deliberately neutral so the
 // writer can be reused by other 2D applications.
 struct HDF5OutputNames {
-  std::string coordinate1 = "coordinate1";
-  std::string coordinate2 = "coordinate2";
+  std::string coordinate1 = "alpha0";
+  std::string coordinate2 = "logEN";
   std::string time = "t";
-  std::string fields = "fields";
+  std::string fields = "PSD";
 };
 
 // Native HDF5 writer for a general 2D result layout:

@@ -73,9 +73,7 @@ int main(int argc, char** argv) {
     const std::filesystem::path h5_path =
         output_dir / (config.run_id + "_data.h5");
 
-    const sayram2d::app::HDF5OutputNames output_names{
-        "alpha0", "logEN", "t", "f"};
-    sayram2d::app::HDF5Output output(h5_path, n1, n2, output_names);
+    sayram2d::app::HDF5Output output(h5_path, n1, n2);
     output.write_coordinate1(alpha0_deg);
     output.write_coordinate2(log_en);
     output.write_times(times);

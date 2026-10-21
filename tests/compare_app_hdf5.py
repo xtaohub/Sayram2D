@@ -39,16 +39,16 @@ def main() -> int:
         raise SystemExit(f"missing HDF5 output: {h5_path}")
 
     with h5py.File(h5_path, "r") as handle:
-        for name in ("alpha0", "logEN", "t", "f"):
+        for name in ("alpha0", "logEN", "t", "PSD"):
             if name not in handle:
                 raise SystemExit(f"missing HDF5 dataset/group /{name}")
         alpha = handle["alpha0"][...]
         logen = handle["logEN"][...]
         times = handle["t"][...]
-        frames = handle["f"]
+        frames = handle["PSD"]
         expected_frames = [str(i) for i in range(11)]
         if sorted(frames.keys(), key=int) != expected_frames:
-            raise SystemExit("HDF5 /f frames are not 0..10")
+            raise SystemExit("HDF5 /PSD frames are not 0..10")
         f0 = frames["0"][...]
         f10 = frames["10"][...]
 

@@ -33,11 +33,14 @@ ENERGIES = (0.5, 2.0)
 FRAMES = ((1, "0.1 day"), (10, "1 day"))
 
 
-def load(path: Path):
+def load(path: Path, field_group: str):
     with h5py.File(path, "r") as handle:
         alpha = handle["alpha0"][...]
         log_en = handle["logEN"][...]
-        fields = {index: handle[f"f/{index}"][...] for index, _ in FRAMES}
+        fields = {
+            index: handle[f"{field_group}/{index}"][...]
+            for index, _ in FRAMES
+        }
     return alpha, log_en, fields
 
 
@@ -55,8 +58,8 @@ def main() -> int:
     parser.add_argument("--outdir", type=Path, default=Path("figures"))
     args = parser.parse_args()
 
-    alpha_new, logen_new, new_fields = load(args.new)
-    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy)
+    alpha_new, logen_new, new_fields = load(args.new, "PSD")
+    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy, "f")
     if not np.allclose(alpha_new, alpha_legacy):
         raise SystemExit("alpha0 grids differ between new and legacy outputs")
     if not np.allclose(logen_new, logen_legacy):
