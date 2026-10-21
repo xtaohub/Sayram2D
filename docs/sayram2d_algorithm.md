@@ -20,7 +20,7 @@ $$
 \end{aligned}
 \tag{2}
 $$
-where 
+where
 $$
 \begin{aligned}
 \Lambda = \begin{bmatrix}
@@ -34,7 +34,7 @@ is the diffusion tensor. The equation is subject to the following Dirichlet
 ($\Gamma_{D}$) and Neumann ($\Gamma_{N}$) boundary conditions:
 $$
 \begin{aligned}
-f &= g_{D}, \quad \text{on } \Gamma_{D}, \\ 
+f &= g_{D}, \quad \text{on } \Gamma_{D}, \\
   q_{N} &= \boldsymbol{n}\cdot \left(-\Lambda \cdot \nabla f\right), \quad \text{on } \Gamma_{N}.
 \end{aligned}
 \tag{4}
@@ -60,7 +60,7 @@ where $f_{K,i}$ is the value of $f$ of the $i_{\text{th}}$ cell that contributes
 
 **Figure 1.** Illustration of the Nonlinear Two-Point Flux Approximation (NTPFA). We first construct a one-sided flux, from cell center $K$ to edge $\sigma$, using only values of $f_K$, $f_{K,A}$, $f_{K,B}$. This process is then repeated for the cell $L$. The flux used in the PPFV method to update $f_{K}$ or $f_{L}$ is derived using the one-sided fluxes.
 
-We consider the diffusion equation part of Equation (2): 
+We consider the diffusion equation part of Equation (2):
 $$
 \begin{aligned}
 G\frac{\partial f}{\partial t} = \nabla \cdot(\Lambda \nabla f),
@@ -84,7 +84,7 @@ J_{K,\sigma} &= \alpha_{K,\sigma, A}(f_K - f_{K,A}) + \alpha_{K,\sigma, B}(f_K -
 \end{aligned}
 \tag{8}
 $$
-where $\alpha_{K,\sigma, A}$ and $\alpha_{K,\sigma, B}$ represent the coefficients to be determined. This $J_{K,\sigma}$ approximates 
+where $\alpha_{K,\sigma, A}$ and $\alpha_{K,\sigma, B}$ represent the coefficients to be determined. This $J_{K,\sigma}$ approximates
 $$
 \begin{aligned}
 -\int_{\sigma} (\Lambda \cdot \nabla f) \cdot \boldsymbol{n}_{K,\sigma}
@@ -94,18 +94,18 @@ $$
 $$
 using information from cell $K$ only.
 
-Gao and Wu (2015) demonstrate that, to ensure the final scheme is positivity-preserving, the only condition required is that for every cell such as $K$, the coefficients satisfy the condition 
+Gao and Wu (2015) demonstrate that, to ensure the final scheme is positivity-preserving, the only condition required is that for every cell such as $K$, the coefficients satisfy the condition
   $$
 \begin{aligned}
 \alpha_{K,\sigma, A} + \alpha_{K,\sigma, B} > 0.
 \end{aligned}
 \tag{10}
 $$
-Gao and Wu (2015) proposed the following expressions for the coefficients,  
+Gao and Wu (2015) proposed the following expressions for the coefficients,
   $$
 \begin{aligned}
 \alpha_{K,\sigma, A} = |\sigma|\frac{\boldsymbol{n}_{K,\sigma}^T\Lambda_K\mathcal{R}(\boldsymbol{x}_{K,B} - \boldsymbol{x}_K)}{(\boldsymbol{x}_{K,A} - \boldsymbol{x}_K)^T\mathcal{R}(\boldsymbol{x}_{K,B} - \boldsymbol{x}_K)}, \\
-    
+
     \alpha_{K,\sigma, B} = |\sigma|\frac{\boldsymbol{n}_{K,\sigma}^T\Lambda_K\mathcal{R}(\boldsymbol{x}_{K,A} - \boldsymbol{x}_K)}{(\boldsymbol{x}_{K,B} - \boldsymbol{x}_K)^T\mathcal{R}(\boldsymbol{x}_{K,A} - \boldsymbol{x}_K)}.
 \end{aligned}
 \tag{11}
@@ -134,7 +134,7 @@ J_{L,\sigma} = \alpha_{L,\sigma, A}(f_L - f_{L,A}) + \alpha_{L,\sigma, B}(f_L - 
 $$
 The coefficients $\alpha_{L,\sigma,A}$ and $\alpha_{L,\sigma,B}$ are calculated using the same coefficient expressions.
 
-The total flux from cell $K$ to cell $L$ through the edge $\sigma$, $\tilde{J}_{K,\sigma}$, is then expressed as a linear combination of $J_{K,\sigma}$ and $J_{L,\sigma}$; i.e., 
+The total flux from cell $K$ to cell $L$ through the edge $\sigma$, $\tilde{J}_{K,\sigma}$, is then expressed as a linear combination of $J_{K,\sigma}$ and $J_{L,\sigma}$; i.e.,
   $$
 \begin{aligned}
 &\tilde{J}_{K,\sigma} = \mu_{K,\sigma}J_{K,\sigma} - \mu_{L,\sigma}J_{L,\sigma}, \\
@@ -151,7 +151,7 @@ where $\mu_{K,\sigma}$ and $\mu_{L,\sigma}$ are two coefficients to be provided 
 $$
 so that $\tilde{J}_{K,\sigma} + \tilde{J}_{L,\sigma} = 0$.
 
-Based on the NTPFA idea and equations for the one-sided fluxes (8) and (13), we define two new coefficients 
+Based on the NTPFA idea and equations for the one-sided fluxes (8) and (13), we define two new coefficients
   $$
 \begin{aligned}
 &a_{K,\sigma} = \alpha_{K,\sigma,A}f_{K,A}^{t} + \alpha_{K,\sigma,B}f_{K,B}^{t}, \\
@@ -171,7 +171,7 @@ orthogonal rectangular meshes. Then we choose $\mu_{K,\sigma}$ and $\mu_{L,\sigm
 \end{aligned}
 \tag{17}
 $$
-and $\mu_{L,\sigma} = 1 - \mu_{K,\sigma}$. Set 
+and $\mu_{L,\sigma} = 1 - \mu_{K,\sigma}$. Set
   $$
 \begin{aligned}
 B_{\sigma} = \begin{cases}
@@ -181,7 +181,7 @@ B_{\sigma} = \begin{cases}
 \end{aligned}
 \tag{18}
 $$
-and 
+and
   $$
 \begin{aligned}
 &B_{\sigma}^+=\frac{|B_{\sigma}| + B_{\sigma}}{2}, \\
@@ -215,23 +215,23 @@ neglect may affect accuracy. Thus, we obtain
 \end{aligned}
 \tag{22}
 $$
-and $\tilde{J}_{L,\sigma} = -\tilde{J}_{K,\sigma}$. 
+and $\tilde{J}_{L,\sigma} = -\tilde{J}_{K,\sigma}$.
 
-When dealing with an edge subject to the Dirichlet boundary condition, we directly use the one-sided flux as $\tilde{J}_{K,\sigma}$; i.e.,  
+When dealing with an edge subject to the Dirichlet boundary condition, we directly use the one-sided flux as $\tilde{J}_{K,\sigma}$; i.e.,
   $$
 \begin{aligned}
 \tilde{J}_{K,\sigma_{D}} = J_{K,\sigma_{D}} = (\alpha_{K,\sigma,A} + \alpha_{K,\sigma,B})f_K^{t+\Delta t} + B_{\sigma}^+ - B_{\sigma}^-.
 \end{aligned}
 \tag{23}
 $$
-  This can be written as 
+  This can be written as
   $$
 \begin{aligned}
 \tilde{J}_{K,\sigma_{D}} \approx \left(\alpha_{K,\sigma_{D},A} + \alpha_{K,\sigma_{D},B} + \frac{B_{\sigma}^{+}}{f_{K}^{t}+\epsilon}\right) f_K^{t+\Delta t} - B_{\sigma}^-.
 \end{aligned}
 \tag{24}
 $$
-  Clearly, the coefficient is just $A_{K, \sigma_D}$ with $\mu_{K,\sigma}=1$. 
+  Clearly, the coefficient is just $A_{K, \sigma_D}$ with $\mu_{K,\sigma}=1$.
 
 When dealing with Neumann boundary conditions, $\sigma_{N}$, we directly use the
 flux:
@@ -242,7 +242,7 @@ $$
 \tag{25}
 $$
 
-Next, we focus on the $K_{\text{th}}$ cell of the simulation domain and apply the above flux estimate to Equation (6).   
+Next, we focus on the $K_{\text{th}}$ cell of the simulation domain and apply the above flux estimate to Equation (6).
 $$
 \begin{aligned}
 G_{K} \frac{\Delta C_{K}}{\Delta t} (f^{t+\Delta t}_{K} - f^{t}_{K}) = -\sum\limits_{\sigma} \tilde{J}_{K,\sigma} - \sum_{\sigma_{D}} \tilde{J}_{K,\sigma_{D}} - \sum_{\sigma_{N}}\tilde{J}_{K,\sigma_{N}}.
@@ -250,7 +250,7 @@ G_{K} \frac{\Delta C_{K}}{\Delta t} (f^{t+\Delta t}_{K} - f^{t}_{K}) = -\sum\lim
 \tag{26}
 $$
 The summation is over all edges of the cell. Substituting the above forms
-for the flux, we have 
+for the flux, we have
 $$
 \begin{aligned}
 G_{K} \frac{\Delta C_{K}}{\Delta t} (f^{t+\Delta t}_{K} - f^{t}_{K}) = &{}-\sum_{\sigma} \left(A_{K,\sigma} f^{t+\Delta t}_{K} - A_{L,\sigma} f^{t+\Delta t}_{L,\sigma}\right)  \\
@@ -260,7 +260,7 @@ G_{K} \frac{\Delta C_{K}}{\Delta t} (f^{t+\Delta t}_{K} - f^{t}_{K}) = &{}-\sum_
 $$
 Note that $q_{N} \leq 0$.
 
-Denoting $U_{KK} = G_{K} \Delta C_{K} / \Delta t$, the above equation can be further reorganized as 
+Denoting $U_{KK} = G_{K} \Delta C_{K} / \Delta t$, the above equation can be further reorganized as
 $$
 \begin{aligned}
 &\left(U_{KK} + \sum_{\sigma} A_{K,\sigma} + \sum_{\sigma_{D}} A_{K,\sigma_{D}} \right) f_{K}^{t+\Delta t} - \sum_{\sigma} A_{L,\sigma} f_{L,\sigma}^{t+\Delta t} \\
@@ -295,14 +295,14 @@ Here $L$ is the neighboring cell sharing the edge $\sigma$ with $K$.
 
 By construction, $R_{K} \geq 0$, and $\mathsf{M}$ has the following properties
 $M_{KK} > 0$, $M_{KL} \le 0$, and the summation along the $K_{\text{th}}$ column
-is positive; i.e., 
+is positive; i.e.,
   $$
 \begin{aligned}
 \sum_{L} M_{LK} > 0.
 \end{aligned}
 \tag{32}
 $$
-To see this, note that the off-diagonal contributions cancel the interior-edge terms; therefore, 
+To see this, note that the off-diagonal contributions cancel the interior-edge terms; therefore,
   $$
 \begin{aligned}
 \sum_{L} M_{LK} = U_{KK} + \sum_{\sigma_{D}} A_{K,\sigma_{D}} > 0.
@@ -310,7 +310,7 @@ To see this, note that the off-diagonal contributions cancel the interior-edge t
 \tag{33}
 $$
 These properties make $\mathsf{M}$ a nonsingular $M$-matrix; i.e.,
-$\mathsf{M}^{-1}$ is non-negative. Correspondingly, 
+$\mathsf{M}^{-1}$ is non-negative. Correspondingly,
   $$
 \begin{aligned}
 \boldsymbol{f}^{t+\Delta t} = \mathsf{M}^{-1} \cdot \boldsymbol{R}  \geq 0.
