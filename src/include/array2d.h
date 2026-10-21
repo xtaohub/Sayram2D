@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "array_view2d.h"
+#include "index.h"
 
 namespace sayram2d {
 
@@ -32,12 +33,12 @@ class Array2D {
 
   T& operator()(size_type i, size_type j) noexcept {
     assert(i < n1_ && j < n2_);
-    return values_[i + j * n1_];
+    return values_[flat_index(i, j, n1_)];
   }
 
   const T& operator()(size_type i, size_type j) const noexcept {
     assert(i < n1_ && j < n2_);
-    return values_[i + j * n1_];
+    return values_[flat_index(i, j, n1_)];
   }
 
   void fill(const T& value) { std::fill(values_.begin(), values_.end(), value); }
