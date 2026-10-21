@@ -165,9 +165,9 @@ void Solver::update_vertex_f(const Equation& equation,
                              ArrayView2D<const double> f_in) {
   const std::size_t n1 = mesh_.n1();
   const std::size_t n2 = mesh_.n2();
-  const std::size_t nv1 = n1 + 1;
+  const std::size_t nv2 = n2 + 1;
   auto v = [&](std::size_t i, std::size_t j) -> double& {
-    return vertex_f_[flat_index(i, j, nv1)];
+    return vertex_f_[flat_index(i, j, nv2)];
   };
   auto lerp = [](double x, double x0, double x1, double f0, double f1) {
     const double denom = x1 - x0;

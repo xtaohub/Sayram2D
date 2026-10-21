@@ -70,9 +70,10 @@ void test_mesh_geometry() {
         "q1 widths");
   check(near(mesh.dq2(0), 2.0) && near(mesh.dq2(1), 3.0), "q2 widths");
   check(near(mesh.cell_measure({1, 1}), 6.0), "cell measure");
+  check(mesh.cell_index({0, 1}) == 1, "row-major cell index");
   check(mesh.cell_index({2, 1}) == 5, "cell index");
-  static_assert(flat_index(2, 1, 3) == 5);
-  check(flat_index(1, 2, 3) == 7, "flat index utility");
+  static_assert(flat_index(2, 1, 3) == 7);
+  check(flat_index(1, 2, 3) == 5, "flat index utility");
   check(mesh.is_boundary_vertex({0, 1}), "boundary vertex");
   check(!mesh.is_boundary_vertex({1, 1}), "interior vertex");
 
