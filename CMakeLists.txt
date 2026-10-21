@@ -105,11 +105,6 @@ if(SAYRAM2D_BUILD_APP)
   endif()
 endif()
 
-option(SAYRAM2D_BUILD_PYTHON "Build the Python bindings" OFF)
-if(SAYRAM2D_BUILD_PYTHON)
-  add_subdirectory(python)
-endif()
-
 if(BUILD_TESTING AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sayram2d.cc)
   add_executable(sayram2d_tests tests/test_sayram2d.cc)
   target_link_libraries(sayram2d_tests PRIVATE sayram2d)
