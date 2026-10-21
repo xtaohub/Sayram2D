@@ -9,8 +9,9 @@ The project is organized around a reusable core library and a set of examples.
 The core library depends only on Eigen. The standalone Albert–Young
 application is one example; HDF5 is used by that example, not by the library.
 
-This version was designed and reviewed by Xin Tao and implemented by DeepSeek
-V4.1 Flash using DeepSeek Harness.
+This version is based on the previous version of Sayram2D developed by Xin Tao
+and Peng Peng. It was designed and reviewed by Xin Tao and implemented by
+DeepSeek V4.1 Flash using DeepSeek Harness.
 
 If you use Sayram2D in your research, please cite:
 
@@ -627,6 +628,8 @@ data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
 ```
 
-## License
+## License and Copyright
+
+Copyright (c) 2026 Xin Tao.
 
 This code is released under the MIT License.
