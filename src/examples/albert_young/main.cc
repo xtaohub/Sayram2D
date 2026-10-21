@@ -73,9 +73,9 @@ int main(int argc, char** argv) {
         output_dir / (config.run_id + "_data.h5");
 
     sayram2d::app::HDF5Output output(h5_path, n1, n2);
-    output.write_coordinate1(alpha0_deg);
-    output.write_coordinate2(log_e);
-    output.write_times(times);
+    output.write_vector(alpha0_deg, "alpha0", "deg");
+    output.write_vector(log_e, "logE", "log(MeV)");
+    output.write_vector(times, "t", "day");
 
     Eigen::MatrixXd f_in = model.initial_field();
     Eigen::MatrixXd f_out(static_cast<Eigen::Index>(n1),

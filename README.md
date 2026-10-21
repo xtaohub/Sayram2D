@@ -370,9 +370,11 @@ application.
 
 This code is not part of the numerical library and is not required by library
 users. It is kept separate so that other realistic 2D applications can reuse
-the configuration and I/O patterns. `HDF5Output` accepts `HDF5OutputNames`, so
-the coordinate, time, and field dataset names are configurable. The defaults
-are the Albert–Young names: `alpha0`, `logE`, `t`, and `PSD`.
+the configuration and I/O patterns. The methods
+`HDF5Output::write_vector(values, name, units)` and
+`HDF5Output::write_field(frame, field, name, units)` let callers choose dataset
+names and units; the Albert–Young driver uses `alpha0`, `logE`, `t`, and
+`PSD`.
 
 ### Example 1: vector-based PPFV
 

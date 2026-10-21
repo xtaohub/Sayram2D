@@ -127,7 +127,7 @@ void test_input_loader() {
       std::filesystem::temp_directory_path() / "sayram2d_app_input_test.h5";
   {
     HDF5Output incomplete(temporary, data.n1, data.n2);
-    incomplete.write_times({0.0});
+    incomplete.write_vector({0.0}, "t", "day");
   }
   expect_throw(
       [&] { (void)load_input(temporary); },

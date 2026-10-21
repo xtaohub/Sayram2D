@@ -169,7 +169,9 @@ void write_vector_dataset(hid_t file, const char* name,
   check_status(H5Dwrite(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                         H5P_DEFAULT, values.data()),
                "write dataset " + std::string(name));
-  write_string_attribute(dataset.id(), "units", units);
+  if (!units.empty()) {
+    write_string_attribute(dataset.id(), "units", units);
+  }
 }
 
 }  // namespace
@@ -207,61 +209,40 @@ InputData load_input(const std::filesystem::path& path) {
 }
 
 HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
-                       std::size_t n2, HDF5OutputNames names,
-                       HDF5OutputUnits units)
-    : n1_(n1), n2_(n2), names_(std::move(names)), units_(std::move(units)) {
+                       std::size_t n2)
+    : n1_(n1), n2_(n2) {
   H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
   const hid_t file = check_id(
       H5Fcreate(path.string().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
                 H5P_DEFAULT),
       "create " + path.string());
   file_id_ = file;
-  try {
-    group_id_ = check_id(
-        H5Gcreate2(file_id_, names_.fields.c_str(), H5P_DEFAULT, H5P_DEFAULT,
-                   H5P_DEFAULT),
-        "create group /" + names_.fields);
-  } catch (...) {
-    H5Fclose(file_id_);
-    file_id_ = -1;
-    throw;
-  }
 }
 
 HDF5Output::~HDF5Output() {
-  if (group_id_ >= 0) H5Gclose(group_id_);
   if (file_id_ >= 0) H5Fclose(file_id_);
 }
 
-void HDF5Output::write_coordinate1(const std::vector<double>& values) {
-  if (values.size() != n1_) {
-    throw std::runtime_error("HDF5: /" + names_.coordinate1 +
-                             " has the wrong length");
-  }
-  write_vector_dataset(file_id_, names_.coordinate1.c_str(), values,
-                       units_.coordinate1);
+void HDF5Output::write_vector(const std::vector<double>& values,
+                              const std::string& name,
+                              const std::string& units) {
+  write_vector_dataset(file_id_, name.c_str(), values, units);
 }
 
-void HDF5Output::write_coordinate2(const std::vector<double>& values) {
-  if (values.size() != n2_) {
-    throw std::runtime_error("HDF5: /" + names_.coordinate2 +
-                             " has the wrong length");
-  }
-  write_vector_dataset(file_id_, names_.coordinate2.c_str(), values,
-                       units_.coordinate2);
-}
-
-void HDF5Output::write_times(const std::vector<double>& values) {
-  write_vector_dataset(file_id_, names_.time.c_str(), values,
-                       units_.time);
-}
-
-void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
+void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field,
+                             const std::string& name,
+                             const std::string& units) {
   if (field.rows() != static_cast<Eigen::Index>(n1_) ||
       field.cols() != static_cast<Eigen::Index>(n2_)) {
-    throw std::runtime_error("HDF5: /" + names_.fields + "/" +
-                             std::to_string(frame) +
+    throw std::runtime_error("HDF5: /" + name + "/" + std::to_string(frame) +
                              " has the wrong dimensions");
+  }
+  if (H5Lexists(file_id_, name.c_str(), H5P_DEFAULT) <= 0) {
+    const hid_t group = check_id(
+        H5Gcreate2(file_id_, name.c_str(), H5P_DEFAULT, H5P_DEFAULT,
+                   H5P_DEFAULT),
+        "create group /" + name);
+    H5Gclose(group);
   }
 
   std::vector<double> row_major(n1_ * n2_);
@@ -275,15 +256,17 @@ void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
   const hsize_t dims[2] = {static_cast<hsize_t>(n1_),
                            static_cast<hsize_t>(n2_)};
   Space space(check_id(H5Screate_simple(2, dims, nullptr), "create dataspace"));
-  const std::string name = names_.fields + "/" + std::to_string(frame);
+  const std::string dataset_name = name + "/" + std::to_string(frame);
   Dataset dataset(check_id(
-      H5Dcreate2(file_id_, name.c_str(), H5T_NATIVE_DOUBLE, space.id(),
-                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
-      "create dataset /" + name));
+      H5Dcreate2(file_id_, dataset_name.c_str(), H5T_NATIVE_DOUBLE,
+                 space.id(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
+      "create dataset /" + dataset_name));
   check_status(H5Dwrite(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                         H5P_DEFAULT, row_major.data()),
-               "write dataset /" + name);
-  write_string_attribute(dataset.id(), "units", units_.fields);
+               "write dataset /" + dataset_name);
+  if (!units.empty()) {
+    write_string_attribute(dataset.id(), "units", units);
+  }
   check_status(H5Fflush(file_id_, H5F_SCOPE_GLOBAL), "flush output file");
 }
 

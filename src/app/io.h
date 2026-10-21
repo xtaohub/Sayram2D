@@ -29,48 +29,32 @@ struct InputData {
 
 InputData load_input(const std::filesystem::path& path);
 
-// Dataset names used by HDF5Output. The defaults match the Albert–Young example;
-// other applications may override them.
-struct HDF5OutputNames {
-  std::string coordinate1 = "alpha0";
-  std::string coordinate2 = "logE";
-  std::string time = "t";
-  std::string fields = "PSD";
-};
-
-// Units written as the HDF5 `units` attribute on each output dataset.
-struct HDF5OutputUnits {
-  std::string coordinate1 = "deg";
-  std::string coordinate2 = "log(MeV)";
-  std::string time = "day";
-  std::string fields = "arbitrary";
-};
-
 // Native HDF5 writer for a general 2D result layout:
-//   /<coordinate1>, /<coordinate2>, /<time>, /<fields>/<frame>
+//   /<name> for vectors and /<name>/<frame> for fields
 // Matrix datasets are (n1, n2), with the last dimension varying fastest.
 class HDF5Output {
  public:
   HDF5Output(const std::filesystem::path& path, std::size_t n1,
-             std::size_t n2, HDF5OutputNames names = {},
-             HDF5OutputUnits units = {});
+             std::size_t n2);
   ~HDF5Output();
 
   HDF5Output(const HDF5Output&) = delete;
   HDF5Output& operator=(const HDF5Output&) = delete;
 
-  void write_coordinate1(const std::vector<double>& values);
-  void write_coordinate2(const std::vector<double>& values);
-  void write_times(const std::vector<double>& values);
-  void write_field(std::size_t frame, const Eigen::MatrixXd& field);
+  // Write a 1D dataset at the root, with an optional `units` attribute.
+  void write_vector(const std::vector<double>& values,
+                    const std::string& name,
+                    const std::string& units = {});
+
+  // Write a 2D field as /<name>/<frame>, with a `units` attribute.
+  void write_field(std::size_t frame, const Eigen::MatrixXd& field,
+                   const std::string& name = "PSD",
+                   const std::string& units = "arbitrary");
 
  private:
   std::int64_t file_id_ = -1;
-  std::int64_t group_id_ = -1;
   std::size_t n1_ = 0;
   std::size_t n2_ = 0;
-  HDF5OutputNames names_;
-  HDF5OutputUnits units_;
 };
 
 }  // namespace sayram2d::app
