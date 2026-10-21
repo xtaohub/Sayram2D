@@ -53,14 +53,13 @@ int main(int argc, char** argv) {
     const int interval = config.nsteps / (config.n_frames - 1);
 
     std::vector<double> alpha0_deg(n1);
-    std::vector<double> log_en(n2);
+    std::vector<double> log_e(n2);
     std::vector<double> times(static_cast<std::size_t>(config.n_frames));
     for (std::size_t i = 0; i < n1; ++i) {
       alpha0_deg[i] = sayram2d::physics::radians_to_degrees(mesh.q1_center(i));
     }
     for (std::size_t j = 0; j < n2; ++j) {
-      log_en[j] = mesh.q2_center(j) -
-                    std::log(sayram2d::physics::electron_rest_energy_mev);
+      log_e[j] = mesh.q2_center(j);  // log(E/MeV)
     }
     for (int frame = 0; frame < config.n_frames; ++frame) {
       times[static_cast<std::size_t>(frame)] =
@@ -75,7 +74,7 @@ int main(int argc, char** argv) {
 
     sayram2d::app::HDF5Output output(h5_path, n1, n2);
     output.write_coordinate1(alpha0_deg);
-    output.write_coordinate2(log_en);
+    output.write_coordinate2(log_e);
     output.write_times(times);
 
     Eigen::MatrixXd f_in = model.initial_field();

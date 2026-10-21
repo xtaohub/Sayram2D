@@ -13,6 +13,7 @@ H5_PATH = Path("build/app_test_output/AppTest/AppTest_data.h5")
 LEGACY_PATH = Path("tests/albert_young/legacy_reference.csv")
 ATOL = 1e-12
 RTOL = 1e-12
+E0 = 0.511875  # MeV
 
 
 def read_legacy(path: Path, n1: int, n2: int):
@@ -39,11 +40,11 @@ def main() -> int:
         raise SystemExit(f"missing HDF5 output: {h5_path}")
 
     with h5py.File(h5_path, "r") as handle:
-        for name in ("alpha0", "logEN", "t", "PSD"):
+        for name in ("alpha0", "logE", "t", "PSD"):
             if name not in handle:
                 raise SystemExit(f"missing HDF5 dataset/group /{name}")
         alpha = handle["alpha0"][...]
-        logen = handle["logEN"][...]
+        loge = handle["logE"][...]
         times = handle["t"][...]
         frames = handle["PSD"]
         expected_frames = [str(i) for i in range(11)]
@@ -52,7 +53,7 @@ def main() -> int:
         f0 = frames["0"][...]
         f10 = frames["10"][...]
 
-    if alpha.shape != (80,) or logen.shape != (80,):
+    if alpha.shape != (80,) or loge.shape != (80,):
         raise SystemExit("coordinate datasets have wrong shapes")
     if times.shape != (11,):
         raise SystemExit("time dataset has wrong shape")
@@ -62,14 +63,15 @@ def main() -> int:
         raise SystemExit(f"unexpected saved times: {times[0]}..{times[-1]}")
 
     ref_alpha, ref_logen, ref_f0, ref_f10 = read_legacy(legacy_path, 80, 80)
+    ref_logen = ref_logen + np.log(E0)  # legacy logEN is log(E/E0)
     alpha_error = np.max(np.abs(alpha - ref_alpha))
-    logen_error = np.max(np.abs(logen - ref_logen))
+    loge_error = np.max(np.abs(loge - ref_logen))
     f0_error = np.max(np.abs(f0 - ref_f0))
     f10_error = np.max(np.abs(f10 - ref_f10))
     if alpha_error > ATOL:
         raise SystemExit(f"alpha0 mismatch: {alpha_error:.3e}")
-    if logen_error > ATOL:
-        raise SystemExit(f"logEN mismatch: {logen_error:.3e}")
+    if loge_error > ATOL:
+        raise SystemExit(f"logE mismatch: {loge_error:.3e}")
     for name, error in (("f0", f0_error), ("f10", f10_error)):
         if error > ATOL + RTOL * max(1.0, np.max(np.abs(ref_f0 if name == "f0" else ref_f10))):
             raise SystemExit(f"{name} mismatch: {error:.3e}")
@@ -79,7 +81,7 @@ def main() -> int:
     print(
         "[PASS] standalone HDF5: "
         f"max|df0|={f0_error:.3e}, max|df10|={f10_error:.3e}, "
-        f"max|dalpha|={alpha_error:.3e}, max|dlogEN|={logen_error:.3e}"
+        f"max|dalpha|={alpha_error:.3e}, max|dlogE|={loge_error:.3e}"
     )
     return 0
 

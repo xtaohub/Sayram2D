@@ -33,20 +33,24 @@ ENERGIES = (0.5, 2.0)
 FRAMES = ((1, "0.1 day"), (10, "1 day"))
 
 
-def load(path: Path, field_group: str):
+def load(path: Path, field_group: str, energy_coordinate: str):
     with h5py.File(path, "r") as handle:
         alpha = handle["alpha0"][...]
-        log_en = handle["logEN"][...]
+        if energy_coordinate == "logEN":
+            # Legacy files store log(E/E0); convert to log(E/MeV).
+            log_e = handle["logEN"][...] + np.log(E0)
+        else:
+            log_e = handle[energy_coordinate][...]
         fields = {
             index: handle[f"{field_group}/{index}"][...]
             for index, _ in FRAMES
         }
-    return alpha, log_en, fields
+    return alpha, log_e, fields
 
 
-def profile(field: np.ndarray, log_en: np.ndarray, energy: float) -> np.ndarray:
-    target = np.log(energy / E0)
-    return np.array([np.interp(target, log_en, row) for row in field])
+def profile(field: np.ndarray, log_e: np.ndarray, energy: float) -> np.ndarray:
+    target = np.log(energy)
+    return np.array([np.interp(target, log_e, row) for row in field])
 
 
 def main() -> int:
@@ -58,12 +62,12 @@ def main() -> int:
     parser.add_argument("--outdir", type=Path, default=Path("figures"))
     args = parser.parse_args()
 
-    alpha_new, logen_new, new_fields = load(args.new, "PSD")
-    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy, "f")
+    alpha_new, logen_new, new_fields = load(args.new, "PSD", "logE")
+    alpha_legacy, logen_legacy, legacy_fields = load(args.legacy, "f", "logEN")
     if not np.allclose(alpha_new, alpha_legacy):
         raise SystemExit("alpha0 grids differ between new and legacy outputs")
     if not np.allclose(logen_new, logen_legacy):
-        raise SystemExit("logEN grids differ between new and legacy outputs")
+        raise SystemExit("logE grids differ between new and legacy outputs")
 
     new_profiles = {
         frame: {energy: profile(new_fields[frame], logen_new, energy)

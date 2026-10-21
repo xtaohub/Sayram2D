@@ -33,7 +33,7 @@ InputData load_input(const std::filesystem::path& path);
 // writer can be reused by other 2D applications.
 struct HDF5OutputNames {
   std::string coordinate1 = "alpha0";
-  std::string coordinate2 = "logEN";
+  std::string coordinate2 = "logE";
   std::string time = "t";
   std::string fields = "PSD";
 };
