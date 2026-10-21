@@ -3,12 +3,9 @@
 #   make          build ./sayram2d
 #   make app      same
 #   make lib      build the static library (requires ar)
-#   make example  build/run the small library example
 #
 # Edit the four paths below if your installation is in a different place.
-# Tests and benchmarks have separate Makefiles:
-#   make -f Makefile.tests
-#   make -f Makefile.benchmark
+# Tests are configured with CMake/CTest.
 
 CXX := g++-16
 AR ?= ar
@@ -25,7 +22,6 @@ HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
 BUILD_DIR ?= build/sayram2d
 LIB := $(BUILD_DIR)/libsayram2d.a
-EXAMPLE_BIN := $(BUILD_DIR)/example
 APP_BIN := sayram2d
 
 CORE_SRCS := src/library/mesh.cc src/library/boundary_conditions.cc src/library/solver.cc
@@ -33,7 +29,7 @@ APP_SRCS := src/main.cc src/config.cc src/io.cc src/albert_young.cc \
             $(CORE_SRCS)
 OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
-.PHONY: all app lib example clean
+.PHONY: all app lib clean
 
 all: app
 
@@ -54,13 +50,6 @@ $(BUILD_DIR)/%.o: src/%.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 lib: $(LIB)
-
-$(EXAMPLE_BIN): src/library/example.cc $(LIB)
-	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
-
-example: $(EXAMPLE_BIN)
-	$(EXAMPLE_BIN)
 
 clean:
 	rm -rf $(BUILD_DIR) $(APP_BIN)

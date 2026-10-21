@@ -116,15 +116,15 @@ Albert–Young run saved in `tests/albert_young/legacy_reference.csv`:
 - maximum `|delta f10| = 1.07e-14`;
 - minimum `f10 = 1.33e-16` (positive).
 
-Run it with:
+Run the tests with CMake/CTest:
 
 ```bash
-make -f Makefile.tests
-# or
-make -f Makefile.tests albert-young
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
 The committed `tests/albert_young/legacy_reference_1day.h5` is the legacy
 standalone application output for the same 80×80 case advanced to 1 day
 (`dt = 0.002`, `nsteps = 500`, 11 frames at 0, 0.1, ..., 1.0 day). It is used
-by `make -f Makefile.case plot` for the 0.5/2 MeV profile comparison.
+by `python3 scripts/plot_albert_young.py` for the 0.5/2 MeV profile comparison.

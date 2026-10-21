@@ -121,21 +121,19 @@ The app writes one HDF5 file:
 Fields have shape `(n1, n2)`. Eigen matrices are packed row-major into an
 explicit buffer before HDF5 writes.
 
-### Quick Albert–Young case
-
-A separate minimal Makefile provides a one-command case workflow:
+### Run and plot the Albert–Young case
 
 ```bash
-make -f Makefile.case          # build and run the 1-day case
-make -f Makefile.case plot     # run and write figures/*.pdf and *.png
-make -f Makefile.case help
+make
+./sayram2d app.ini
+python3 scripts/plot_albert_young.py
 ```
 
-It uses [`app.ini`](app.ini): `dt = 0.002` days, `nsteps = 500`, and
-11 frames at 0, 0.1, ..., 1.0 day. The single result is
+[`app.ini`](app.ini) uses `dt = 0.002` days, `nsteps = 500`, and 11 frames at
+0, 0.1, ..., 1.0 day. The single result is
 `output/AlbertYoung/AlbertYoung_data.h5`, containing both time slices.
 
-The plot compares this result with the committed legacy 1-day reference
+The plot script compares this result with the committed legacy 1-day reference
 [`tests/albert_young/legacy_reference_1day.h5`](tests/albert_young/legacy_reference_1day.h5)
 at 0.5 and 2 MeV for 0.1 and 1 day:
 
@@ -311,10 +309,10 @@ It advances to `t=0.01` with `dt=1e-4` using `std::vector` coefficient/field
 storage and explicit `make_view2d(...)` views.
 
 ```bash
-make example
+cmake -S . -B build
+cmake --build build --target sayram2d_example
+./build/sayram2d_example
 ```
-
-CMake target: `sayram2d_example`.
 
 ### Ownership and lifetime
 
@@ -369,14 +367,9 @@ is not safe for concurrent `solve()` calls on the same instance. Use one
 `Solver` per concurrent solve. Immutable meshes and read-only coefficient data
 may be shared.
 
-## Tests and benchmarks
+## Tests
 
-```bash
-make -f Makefile.tests
-make -f Makefile.benchmark
-```
-
-CMake/CTest:
+CMake/CTest is the test entry point:
 
 ```bash
 cmake -S . -B build
@@ -384,9 +377,9 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-`make -f Makefile.tests` includes unit tests, legacy numerical comparisons,
-the Albert–Young regression, and standalone-app/HDF5 checks. The root
-`Makefile` only builds the library, example, and `sayram2d` app.
+The registered tests include unit tests, legacy numerical comparisons, the
+Albert–Young regression, and standalone-app/HDF5 checks. The root `Makefile`
+only builds the `sayram2d` app and the library.
 
 ## Albert–Young data
 
@@ -410,10 +403,7 @@ The converter and regression tools remain outside the library.
 ## Repository layout
 
 ```text
-Makefile            library, example, and sayram2d app
-Makefile.tests      unit/regression/application tests
-Makefile.benchmark  timing benchmark
-Makefile.case       one-command Albert-Young case
+Makefile            sayram2d app and library
 src/main.cc         standalone application entry point
 src/config.*        application configuration
 src/io.*            application HDF5 I/O
