@@ -49,6 +49,34 @@ class Dataset {
   hid_t id_;
 };
 
+class Datatype {
+ public:
+  explicit Datatype(hid_t id) : id_(id) {
+    if (id_ < 0) throw std::runtime_error("HDF5: datatype creation failed");
+  }
+  ~Datatype() { H5Tclose(id_); }
+  Datatype(const Datatype&) = delete;
+  Datatype& operator=(const Datatype&) = delete;
+  hid_t id() const noexcept { return id_; }
+
+ private:
+  hid_t id_;
+};
+
+class Attribute {
+ public:
+  explicit Attribute(hid_t id) : id_(id) {
+    if (id_ < 0) throw std::runtime_error("HDF5: attribute creation failed");
+  }
+  ~Attribute() { H5Aclose(id_); }
+  Attribute(const Attribute&) = delete;
+  Attribute& operator=(const Attribute&) = delete;
+  hid_t id() const noexcept { return id_; }
+
+ private:
+  hid_t id_;
+};
+
 class File {
  public:
   explicit File(hid_t id) : id_(id) {
@@ -115,8 +143,23 @@ Eigen::MatrixXd read_matrix(hid_t file, const char* name, std::size_t n1,
   return matrix;
 }
 
+void write_string_attribute(hid_t object, const char* name,
+                            const std::string& value) {
+  Space space(check_id(H5Screate(H5S_SCALAR), "create attribute dataspace"));
+  Datatype type(check_id(H5Tcopy(H5T_C_S1), "copy string datatype"));
+  check_status(H5Tset_size(type.id(), value.size() + 1),
+               "set string attribute size");
+  Attribute attribute(check_id(
+      H5Acreate2(object, name, type.id(), space.id(), H5P_DEFAULT,
+                 H5P_DEFAULT),
+      "create attribute " + std::string(name)));
+  check_status(H5Awrite(attribute.id(), type.id(), value.c_str()),
+               "write attribute " + std::string(name));
+}
+
 void write_vector_dataset(hid_t file, const char* name,
-                          const std::vector<double>& values) {
+                          const std::vector<double>& values,
+                          const std::string& units) {
   const hsize_t dims[1] = {static_cast<hsize_t>(values.size())};
   Space space(check_id(H5Screate_simple(1, dims, nullptr), "create dataspace"));
   Dataset dataset(check_id(
@@ -126,6 +169,7 @@ void write_vector_dataset(hid_t file, const char* name,
   check_status(H5Dwrite(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                         H5P_DEFAULT, values.data()),
                "write dataset " + std::string(name));
+  write_string_attribute(dataset.id(), "units", units);
 }
 
 }  // namespace
@@ -163,8 +207,9 @@ InputData load_input(const std::filesystem::path& path) {
 }
 
 HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
-                       std::size_t n2, HDF5OutputNames names)
-    : n1_(n1), n2_(n2), names_(std::move(names)) {
+                       std::size_t n2, HDF5OutputNames names,
+                       HDF5OutputUnits units)
+    : n1_(n1), n2_(n2), names_(std::move(names)), units_(std::move(units)) {
   H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
   const hid_t file = check_id(
       H5Fcreate(path.string().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
@@ -193,7 +238,8 @@ void HDF5Output::write_coordinate1(const std::vector<double>& values) {
     throw std::runtime_error("HDF5: /" + names_.coordinate1 +
                              " has the wrong length");
   }
-  write_vector_dataset(file_id_, names_.coordinate1.c_str(), values);
+  write_vector_dataset(file_id_, names_.coordinate1.c_str(), values,
+                       units_.coordinate1);
 }
 
 void HDF5Output::write_coordinate2(const std::vector<double>& values) {
@@ -201,11 +247,13 @@ void HDF5Output::write_coordinate2(const std::vector<double>& values) {
     throw std::runtime_error("HDF5: /" + names_.coordinate2 +
                              " has the wrong length");
   }
-  write_vector_dataset(file_id_, names_.coordinate2.c_str(), values);
+  write_vector_dataset(file_id_, names_.coordinate2.c_str(), values,
+                       units_.coordinate2);
 }
 
 void HDF5Output::write_times(const std::vector<double>& values) {
-  write_vector_dataset(file_id_, names_.time.c_str(), values);
+  write_vector_dataset(file_id_, names_.time.c_str(), values,
+                       units_.time);
 }
 
 void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
@@ -235,6 +283,7 @@ void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
   check_status(H5Dwrite(dataset.id(), H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                         H5P_DEFAULT, row_major.data()),
                "write dataset /" + name);
+  write_string_attribute(dataset.id(), "units", units_.fields);
   check_status(H5Fflush(file_id_, H5F_SCOPE_GLOBAL), "flush output file");
 }
 

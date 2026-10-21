@@ -29,13 +29,21 @@ struct InputData {
 
 InputData load_input(const std::filesystem::path& path);
 
-// Dataset names used by HDF5Output. Defaults are deliberately neutral so the
-// writer can be reused by other 2D applications.
+// Dataset names used by HDF5Output. The defaults match the Albert–Young example;
+// other applications may override them.
 struct HDF5OutputNames {
   std::string coordinate1 = "alpha0";
   std::string coordinate2 = "logE";
   std::string time = "t";
   std::string fields = "PSD";
+};
+
+// Units written as the HDF5 `units` attribute on each output dataset.
+struct HDF5OutputUnits {
+  std::string coordinate1 = "deg";
+  std::string coordinate2 = "log(MeV)";
+  std::string time = "day";
+  std::string fields = "arbitrary";
 };
 
 // Native HDF5 writer for a general 2D result layout:
@@ -44,7 +52,8 @@ struct HDF5OutputNames {
 class HDF5Output {
  public:
   HDF5Output(const std::filesystem::path& path, std::size_t n1,
-             std::size_t n2, HDF5OutputNames names = {});
+             std::size_t n2, HDF5OutputNames names = {},
+             HDF5OutputUnits units = {});
   ~HDF5Output();
 
   HDF5Output(const HDF5Output&) = delete;
@@ -61,6 +70,7 @@ class HDF5Output {
   std::size_t n1_ = 0;
   std::size_t n2_ = 0;
   HDF5OutputNames names_;
+  HDF5OutputUnits units_;
 };
 
 }  // namespace sayram2d::app

@@ -570,16 +570,16 @@ The app writes one HDF5 file:
 
 ```text
 <output_dir>/<run_id>/<run_id>_data.h5
-  /alpha0     pitch-angle cell centers, degrees
-  /logE       log(E/MeV)
-  /t          saved times in days, including 0 and nsteps*dt
-  /PSD/0      initial distribution
-  /PSD/1      first saved distribution
+  /alpha0     pitch-angle cell centers, units: deg
+  /logE       log(E/MeV), units: log(MeV)
+  /t          saved times, units: day, including 0 and nsteps*dt
+  /PSD/0      initial distribution, units: arbitrary
+  /PSD/1      first saved distribution, units: arbitrary
   ...
 ```
 
-Fields have shape `(n1, n2)`. Eigen matrices are packed row-major into an
-explicit buffer before HDF5 writes.
+Each dataset carries a `units` attribute. Fields have shape `(n1, n2)`.
+Eigen matrices are packed row-major into an explicit buffer before HDF5 writes.
 
 #### Build, run, and plot
 
