@@ -291,7 +291,7 @@ auto column_view = make_view2d(D11, shape, ArrayLayout::column_major);
 ```cpp
 // Logical (n1,n2) slice of a row-major (n1,n2,2) array, fixed k=1.
 auto view = make_view2d(data.data() + 1, Shape2{n1, n2},
-                       Strides2{n2 * 2, 2});
+                       Strides2{static_cast<std::ptrdiff_t>(n2 * 2), 2});
 ```
 
 The optional `container_adapter.h` provides `make_view2d(container)` for
@@ -299,8 +299,96 @@ xtensor-like 2-D containers; the core does not include xtensor.
 
 ### Using the solver from a 3D code
 
-If a 3D caller stores fields with the slice index fastest, for example
-`volume[(i*n2 + j)*n3 + k]`, each 2D layer is an explicit strided view:
+`ArrayView2D<T>` is the bridge between a 3D or 4D host array and the 2D solver.
+It does **not** represent the whole 3D array. It represents one logical 2D plane
+with extents `(n1, n2)` and two element strides.
+
+#### Memory model
+
+```cpp
+view(i, j) == view.data()[i * view.stride1() + j * view.stride2()]
+```
+
+`Shape2` holds the two logical extents `n1` and `n2`; `Strides2` holds
+`stride1` and `stride2`. The strides are measured in elements, not bytes. The
+view owns no memory; it only stores the pointer, extents, and strides. `size()`
+is `n1 * n2`, and `empty()` is true when either extent is zero.
+
+A mutable `ArrayView2D<T>` can be converted to `ArrayView2D<const T>` without
+copying. The reverse conversion is not allowed.
+
+#### Constructing views
+
+For a contiguous `std::vector`, the default is row-major:
+
+```cpp
+const Shape2 shape{n1, n2};
+auto G2 = make_view2d(G, shape);
+```
+
+A `std::vector` is storage, not itself a 2D field. Its length must equal
+`n1 * n2`; the caller chooses the logical shape. In particular, do not treat a
+1D profile as a 2D field unless `n×1` or `1×n` is genuinely what you mean.
+
+Use `ArrayLayout::column_major` only when the vector is actually stored in
+column-major order:
+
+```cpp
+auto G2col = make_view2d(G, shape, ArrayLayout::column_major);
+```
+
+This changes how the same buffer is interpreted; it does not transpose the
+data. For arbitrary layouts, use the shape/stride form:
+
+```cpp
+auto view = make_view2d(pointer, Shape2{n1, n2},
+                        Strides2{stride1, stride2});
+```
+
+The lower-level five-argument form remains available:
+
+```cpp
+auto raw_view = make_view2d(pointer, n1, n2, stride1, stride2);
+```
+
+`Eigen::MatrixXd` has a direct convenience path: a full `MatrixXd` lvalue is
+accepted by `Equation` and `Solver` without an explicit view, using Eigen's
+column-major layout. `Eigen::Block`, `Eigen::Map`, and slices of larger arrays
+are not implicitly accepted; construct an `ArrayView2D` for them.
+
+#### Common 3D layouts
+
+For a 3D buffer `data[i][j][k]`, the correct offset and strides depend on the
+storage order:
+
+| Storage order | Fixed-`k` offset | `stride1` | `stride2` |
+|---|---:|---:|---:|
+| `k` fastest: `data[(i*n2 + j)*n3 + k]` | `k` | `n2*n3` | `n3` |
+| `k` slowest: `data[(k*n1 + i)*n2 + j]` | `k*n1*n2` | `n2` | `1` |
+
+The first layout is common for arrays that store several fields or energy
+channels together. The second layout makes each 2D plane contiguous.
+
+For a 4D array with the last two indices fixed, the same rule applies. If
+
+```text
+data[((i*n2 + j)*n3 + k)*n4 + l]
+```
+
+then fixing `k` and `l` gives:
+
+```cpp
+const std::ptrdiff_t offset = k*n4 + l;
+const std::ptrdiff_t stride1 = n2*n3*n4;
+const std::ptrdiff_t stride2 = n3*n4;
+```
+
+In general, remove the two fixed axes from the shape, keep the strides of the
+two remaining axes, and add the fixed-index contributions to the data pointer.
+
+#### Complete 3D example
+
+The following uses the `k`-fastest layout:
 
 ```cpp
 const std::size_t n3 = 8;
@@ -311,14 +399,18 @@ std::vector<double> D22(n1 * n2 * n3, 1.0);
 std::vector<double> f(n1 * n2 * n3);
 std::vector<double> f_next(n1 * n2 * n3);
 
+const Shape2 shape{n1, n2};
+const std::ptrdiff_t stride1 =
+    static_cast<std::ptrdiff_t>(n2 * n3);
+const std::ptrdiff_t stride2 = static_cast<std::ptrdiff_t>(n3);
+
 auto layer = [&](std::vector<double>& values, std::size_t k) {
-  return make_view2d(values.data() + k, Shape2{n1, n2},
-                     Strides2{static_cast<std::ptrdiff_t>(n2 * n3),
-                             static_cast<std::ptrdiff_t>(n3)});
+  return make_view2d(values.data() + k, shape,
+                     Strides2{stride1, stride2});
 };
 
 Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
-BoundaryConditions bc;           // shared or per-layer; caller-owned
+BoundaryConditions bc;           // caller-owned
 Solver solver(mesh);
 
 for (std::size_t k = 0; k < n3; ++k) {
@@ -330,13 +422,27 @@ for (std::size_t k = 0; k < n3; ++k) {
 }
 ```
 
-The view stores the explicit strides; no 3D container is copied or
-interpreted by the library. `Solver` is reusable across sequential layers with
-the same mesh. Constructing `Equation` inside the loop is nearly free: it only
-stores non-owning views and a boundary reference, checks extents, and does no
-matrix allocation or symbolic factorization. The solve dominates the cost. If
-all layers use identical coefficients, the `Equation` can be hoisted out of the
-loop. Use a separate `Solver` instance for concurrent solves.
+No 3D container is copied or interpreted by the library. The caller controls
+the layout, and the library only sees four coefficient views and two field
+views.
+
+If all layers use identical coefficients, the `Equation` can be constructed
+once outside the loop. `Solver` is reusable across sequential layers on the
+same mesh. The solve dominates the cost; constructing `Equation` per layer is
+nearly free.
+
+#### Parallel 3D solves
+
+The natural parallel unit is a 2D plane:
+
+- each worker processes a different `k` (or `(k,l)` in 4D);
+- each worker needs its own `Solver`; a `Solver` is not safe for concurrent
+  `solve()` calls;
+- coefficient planes may be shared read-only;
+- each worker writes to a distinct output plane.
+
+The caller is responsible for keeping the parent arrays and the
+`BoundaryConditions` object alive for the duration of every solve.
 
 ### Example driver
 
