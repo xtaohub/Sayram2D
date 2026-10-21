@@ -105,7 +105,7 @@ if(SAYRAM2D_BUILD_APP)
   endif()
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sayram2d.cc)
   add_executable(sayram2d_tests tests/test_sayram2d.cc)
   target_link_libraries(sayram2d_tests PRIVATE sayram2d)
   add_test(NAME sayram2d_unit COMMAND sayram2d_tests)

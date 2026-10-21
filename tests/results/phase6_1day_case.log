@@ -1,5 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/usr/bin/make -f Makefile app
-make[1]: Nothing to be done for `app'.
-./sayram2d config/albert_young_1day.ini
-wrote "output/AlbertYoung1day/AlbertYoung1day_data.h5"
-  n1=80 n2=80 nsteps=500 n_frames=11 dt=0.002 days

@@ -116,7 +116,7 @@ Albert–Young run saved in `tests/albert_young/legacy_reference.csv`:
 - maximum `|delta f10| = 1.07e-14`;
 - minimum `f10 = 1.33e-16` (positive).
 
-Run the tests with CMake/CTest:
+In a local checkout that includes the untracked tests directory, run:
 
 ```bash
 cmake -S . -B build

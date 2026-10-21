@@ -1,9 +1,0 @@
-Remaining redesign: pre-change numerical comparison
-
-albert_young_new_reference.csv: max_abs_diff=0
-nonuniform_diag_mixed.csv: max_abs_diff=0
-nonuniform_offdiag_loss.csv: max_abs_diff=0
-nonuniform_offdiag_mixed.csv: max_abs_diff=0
-nonuniform_offdiag_source.csv: max_abs_diff=0
-uniform_diag_all_dirichlet.csv: max_abs_diff=0
-uniform_offdiag_all_zeroflux.csv: max_abs_diff=0

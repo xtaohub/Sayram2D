@@ -1,6 +1,0 @@
-g++-16 -Iinclude -I/Users/xtao/local/include -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess examples/albert_young/main.cc build/sayram2d/libsayram2d.a -o build/sayram2d/example
-build/sayram2d/example data/albert_young/ALBERT_YOUNG_80x80.bin build/albert_young_example.csv
-step 5: updated D11 and D22 in place
-wrote build/albert_young_example.csv
-  cells=6400 steps=10 dt=0.002 days
-  f range=[1.33227e-16, 3.72745]
