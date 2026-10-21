@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -28,21 +29,30 @@ struct InputData {
 
 InputData load_input(const std::filesystem::path& path);
 
-// Native HDF5 writer for the legacy result layout:
-//   /alpha0, /logEN, /t, /f/<frame>
+// Dataset names used by HDF5Output. Defaults are deliberately neutral so the
+// writer can be reused by other 2D applications.
+struct HDF5OutputNames {
+  std::string coordinate1 = "coordinate1";
+  std::string coordinate2 = "coordinate2";
+  std::string time = "t";
+  std::string fields = "fields";
+};
+
+// Native HDF5 writer for a general 2D result layout:
+//   /<coordinate1>, /<coordinate2>, /<time>, /<fields>/<frame>
 // Matrix datasets are (n1, n2), with the last dimension varying fastest.
 class HDF5Output {
  public:
   HDF5Output(const std::filesystem::path& path, std::size_t n1,
-             std::size_t n2);
+             std::size_t n2, HDF5OutputNames names = {});
   ~HDF5Output();
 
   HDF5Output(const HDF5Output&) = delete;
   HDF5Output& operator=(const HDF5Output&) = delete;
 
-  void write_alpha0(const std::vector<double>& degrees);
-  void write_log_en(const std::vector<double>& values);
-  void write_times(const std::vector<double>& days);
+  void write_coordinate1(const std::vector<double>& values);
+  void write_coordinate2(const std::vector<double>& values);
+  void write_times(const std::vector<double>& values);
   void write_field(std::size_t frame, const Eigen::MatrixXd& field);
 
  private:
@@ -50,6 +60,7 @@ class HDF5Output {
   std::int64_t group_id_ = -1;
   std::size_t n1_ = 0;
   std::size_t n2_ = 0;
+  HDF5OutputNames names_;
 };
 
 }  // namespace sayram2d::app

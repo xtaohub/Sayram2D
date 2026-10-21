@@ -75,11 +75,12 @@ if(SAYRAM2D_BUILD_APP)
   endif()
 
   add_library(sayram2d_app_core STATIC
-    src/examples/albert_young/config.cc
-    src/examples/albert_young/io.cc
+    src/app/config.cc
+    src/app/io.cc
     src/examples/albert_young/albert_young.cc
   )
   target_include_directories(sayram2d_app_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app
     ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/albert_young
   )
   target_link_libraries(sayram2d_app_core PUBLIC sayram2d)

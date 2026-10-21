@@ -18,7 +18,7 @@ HDF5_LIBDIR ?= /opt/homebrew/opt/hdf5/lib
 HDF5_LIBS ?= -lhdf5
 
 CPPFLAGS := -Isrc/include -I$(EIGEN_INCLUDE)
-APP_CPPFLAGS := -Isrc/examples/albert_young -I$(HDF5_INCLUDE)
+APP_CPPFLAGS := -Isrc/app -Isrc/examples/albert_young -I$(HDF5_INCLUDE)
 CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
@@ -30,8 +30,7 @@ EXAMPLE_EIGEN_BIN := $(BUILD_DIR)/example_eigen
 
 CORE_SRCS := src/mesh.cc src/boundary_conditions.cc src/solver.cc
 APP_SRCS := src/examples/albert_young/main.cc \
-            src/examples/albert_young/config.cc \
-            src/examples/albert_young/io.cc \
+            src/app/config.cc src/app/io.cc \
             src/examples/albert_young/albert_young.cc $(CORE_SRCS)
 OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 

@@ -361,6 +361,19 @@ The examples are intentionally separate from the core library. Examples 1 and
 2 are small library demos; the Albert–Young example is the complete standalone
 application.
 
+### Application support layer
+
+[`src/app/`](src/app/) contains generic application infrastructure:
+
+- [`config.h`](src/app/config.h) — strict INI parsing;
+- [`io.h`](src/app/io.h) — HDF5 input and output.
+
+This code is not part of the numerical library and is not required by library
+users. It is kept separate so that other realistic 2D applications can reuse
+the configuration and I/O patterns. `HDF5Output` accepts `HDF5OutputNames`, so
+the coordinate, time, and field dataset names are configurable; the
+Albert–Young example passes `alpha0`, `logEN`, `t`, and `f`.
+
 ### Example 1: vector-based PPFV
 
 [`src/examples/example1.cc`](src/examples/example1.cc) solves the uniform-grid
@@ -454,12 +467,10 @@ definitions reproducible, and makes batch runs scriptable. The Albert–Young
 initial distribution, boundary functions, and coefficient interpretation remain
 compiled into the example.
 
-The HDF5 I/O layer in
-[`src/examples/albert_young/io.h`](src/examples/albert_young/io.h) is separate
-from the solver and reads/writes named mesh, coefficient, and field arrays. It
-can be reused or adapted for other realistic 2D diffusion applications; its
-current dataset names and output schema are specific to this Albert–Young case.
-The INI parser follows the same application-layer pattern.
+The generic HDF5 I/O layer in [`src/app/io.h`](src/app/io.h) is separate from
+the solver and reads/writes named mesh, coefficient, and field arrays. The
+writer takes configurable dataset names; the Albert–Young driver supplies its
+own `alpha0`/`logEN`/`t`/`f` layout. The INI parser is similarly reusable.
 
 Application support types (`Config`, `InputData`, `HDF5Output`) are in
 `sayram2d::app`. The Albert–Young model and initial/boundary functions are in
@@ -609,8 +620,8 @@ formulas, and the HDF5 layout.
 The core library (`Mesh`, `Equation`, `Solver`, `BoundaryConditions`) has no
 file-format or configuration dependency. The application owns:
 
-- `src/examples/albert_young/config.cc` — strict INI parser;
-- `src/examples/albert_young/io.cc` — HDF5 reader/writer using the native C API;
+- `src/app/config.cc` — strict INI parser;
+- `src/app/io.cc` — HDF5 reader/writer using the native C API;
 - `src/examples/albert_young/albert_young.cc` — built-in initial and boundary functions.
 
 The converter and regression tools remain outside the library.
@@ -635,9 +646,10 @@ only builds the `sayram2d` app and the library.
 Makefile            sayram2d app, library, and examples
 src/*.cc            numerical library implementation
 src/include/        public library headers
+src/app/            generic application configuration and HDF5 I/O
 src/examples/       example1.cc and example_eigen.cc
 src/examples/albert_young/
-                    Albert–Young application and case files
+                    Albert–Young driver and case model
 scripts/            data conversion and plotting
 figures/            generated comparison figures
 tests/              unit tests, legacy/Albert-Young regression, benchmarks

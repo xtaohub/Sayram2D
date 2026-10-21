@@ -4,6 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <hdf5.h>
@@ -162,8 +163,8 @@ InputData load_input(const std::filesystem::path& path) {
 }
 
 HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
-                       std::size_t n2)
-    : n1_(n1), n2_(n2) {
+                       std::size_t n2, HDF5OutputNames names)
+    : n1_(n1), n2_(n2), names_(std::move(names)) {
   H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
   const hid_t file = check_id(
       H5Fcreate(path.string().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
@@ -171,9 +172,10 @@ HDF5Output::HDF5Output(const std::filesystem::path& path, std::size_t n1,
       "create " + path.string());
   file_id_ = file;
   try {
-    group_id_ = check_id(H5Gcreate2(file_id_, "f", H5P_DEFAULT, H5P_DEFAULT,
-                                    H5P_DEFAULT),
-                         "create group /f");
+    group_id_ = check_id(
+        H5Gcreate2(file_id_, names_.fields.c_str(), H5P_DEFAULT, H5P_DEFAULT,
+                   H5P_DEFAULT),
+        "create group /" + names_.fields);
   } catch (...) {
     H5Fclose(file_id_);
     file_id_ = -1;
@@ -186,28 +188,32 @@ HDF5Output::~HDF5Output() {
   if (file_id_ >= 0) H5Fclose(file_id_);
 }
 
-void HDF5Output::write_alpha0(const std::vector<double>& degrees) {
-  if (degrees.size() != n1_) {
-    throw std::runtime_error("HDF5: /alpha0 has the wrong length");
+void HDF5Output::write_coordinate1(const std::vector<double>& values) {
+  if (values.size() != n1_) {
+    throw std::runtime_error("HDF5: /" + names_.coordinate1 +
+                             " has the wrong length");
   }
-  write_vector_dataset(file_id_, "alpha0", degrees);
+  write_vector_dataset(file_id_, names_.coordinate1.c_str(), values);
 }
 
-void HDF5Output::write_log_en(const std::vector<double>& values) {
+void HDF5Output::write_coordinate2(const std::vector<double>& values) {
   if (values.size() != n2_) {
-    throw std::runtime_error("HDF5: /logEN has the wrong length");
+    throw std::runtime_error("HDF5: /" + names_.coordinate2 +
+                             " has the wrong length");
   }
-  write_vector_dataset(file_id_, "logEN", values);
+  write_vector_dataset(file_id_, names_.coordinate2.c_str(), values);
 }
 
-void HDF5Output::write_times(const std::vector<double>& days) {
-  write_vector_dataset(file_id_, "t", days);
+void HDF5Output::write_times(const std::vector<double>& values) {
+  write_vector_dataset(file_id_, names_.time.c_str(), values);
 }
 
 void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
   if (field.rows() != static_cast<Eigen::Index>(n1_) ||
       field.cols() != static_cast<Eigen::Index>(n2_)) {
-    throw std::runtime_error("HDF5: /f field has the wrong dimensions");
+    throw std::runtime_error("HDF5: /" + names_.fields + "/" +
+                             std::to_string(frame) +
+                             " has the wrong dimensions");
   }
 
   std::vector<double> row_major(n1_ * n2_);
@@ -221,7 +227,7 @@ void HDF5Output::write_field(std::size_t frame, const Eigen::MatrixXd& field) {
   const hsize_t dims[2] = {static_cast<hsize_t>(n1_),
                            static_cast<hsize_t>(n2_)};
   Space space(check_id(H5Screate_simple(2, dims, nullptr), "create dataspace"));
-  const std::string name = "f/" + std::to_string(frame);
+  const std::string name = names_.fields + "/" + std::to_string(frame);
   Dataset dataset(check_id(
       H5Dcreate2(file_id_, name.c_str(), H5T_NATIVE_DOUBLE, space.id(),
                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
