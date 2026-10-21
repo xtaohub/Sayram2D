@@ -8,6 +8,21 @@
 
 namespace sayram2d {
 
+// Logical extents of a 2D view.
+struct Shape2 {
+  std::size_t n1;
+  std::size_t n2;
+};
+
+// Element strides of a 2D view. Strides are measured in elements, not bytes.
+struct Strides2 {
+  std::ptrdiff_t stride1;
+  std::ptrdiff_t stride2;
+};
+
+// Layout of a contiguous vector viewed as a 2D array.
+enum class ArrayLayout { row_major, column_major };
+
 // Non-owning, strided view of a logical n1 x n2 array.
 //
 // Strides are measured in elements, not bytes. The logical element (i, j) is
@@ -79,21 +94,51 @@ ArrayView2D<T> make_view2d(T* data, std::size_t n1, std::size_t n2,
 }
 
 template <typename T>
-ArrayView2D<T> make_view2d(std::vector<T>& values, std::size_t n1,
-                           std::size_t n2) {
-  if (values.size() != n1 * n2) {
+ArrayView2D<T> make_view2d(T* data, Shape2 shape, Strides2 stride) {
+  return ArrayView2D<T>(data, shape.n1, shape.n2, stride.stride1,
+                        stride.stride2);
+}
+
+template <typename T>
+ArrayView2D<T> make_view2d(std::vector<T>& values, Shape2 shape,
+                           ArrayLayout layout = ArrayLayout::row_major) {
+  if (values.size() != shape.n1 * shape.n2) {
     throw std::invalid_argument("make_view2d: vector size does not match extents");
   }
-  return ArrayView2D<T>(values.data(), n1, n2);
+  const auto n1_stride = static_cast<std::ptrdiff_t>(shape.n1);
+  const auto n2_stride = static_cast<std::ptrdiff_t>(shape.n2);
+  const Strides2 stride =
+      layout == ArrayLayout::row_major
+          ? Strides2{n2_stride, 1}
+          : Strides2{1, n1_stride};
+  return make_view2d(values.data(), shape, stride);
+}
+
+template <typename T>
+ArrayView2D<const T> make_view2d(const std::vector<T>& values, Shape2 shape,
+                                 ArrayLayout layout = ArrayLayout::row_major) {
+  if (values.size() != shape.n1 * shape.n2) {
+    throw std::invalid_argument("make_view2d: vector size does not match extents");
+  }
+  const auto n1_stride = static_cast<std::ptrdiff_t>(shape.n1);
+  const auto n2_stride = static_cast<std::ptrdiff_t>(shape.n2);
+  const Strides2 stride =
+      layout == ArrayLayout::row_major
+          ? Strides2{n2_stride, 1}
+          : Strides2{1, n1_stride};
+  return make_view2d(values.data(), shape, stride);
+}
+
+template <typename T>
+ArrayView2D<T> make_view2d(std::vector<T>& values, std::size_t n1,
+                           std::size_t n2) {
+  return make_view2d(values, Shape2{n1, n2});
 }
 
 template <typename T>
 ArrayView2D<const T> make_view2d(const std::vector<T>& values, std::size_t n1,
                                  std::size_t n2) {
-  if (values.size() != n1 * n2) {
-    throw std::invalid_argument("make_view2d: vector size does not match extents");
-  }
-  return ArrayView2D<const T>(values.data(), n1, n2);
+  return make_view2d(values, Shape2{n1, n2});
 }
 
 }  // namespace sayram2d

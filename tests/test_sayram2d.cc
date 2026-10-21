@@ -156,6 +156,27 @@ void test_array_views() {
   const auto const_vector_view = make_view2d(const_values, 3, 4);
   check(const_vector_view(2, 3) == 11.0, "const vector view");
 
+  const Shape2 shape{3, 4};
+  const auto shaped = make_view2d(values, shape);
+  check(shaped.extent1() == 3 && shaped.extent2() == 4,
+        "shape-based view extents");
+  check(shaped(1, 2) == 6.0, "shape-based row-major access");
+  const auto shaped_const = make_view2d(const_values, shape);
+  check(shaped_const(2, 3) == 11.0, "shape-based const vector view");
+  const auto column_vector =
+      make_view2d(values, shape, ArrayLayout::column_major);
+  check(column_vector.stride1() == 1 && column_vector.stride2() == 3,
+        "column-major vector strides");
+  check(column_vector(1, 2) == values[1 + 2 * 3],
+        "column-major vector access");
+  check(column_vector.is_contiguous(), "column-major vector contiguous");
+
+  const auto strided_view =
+      make_view2d(values.data(), shape, Strides2{4, 1});
+  check(strided_view(1, 2) == 6.0, "shape/stride pointer view");
+  check(strided_view.stride1() == 4 && strided_view.stride2() == 1,
+        "shape/stride pointer strides");
+
   ArrayView2D<double> column(values.data(), 3, 4, 1, 3);
   check(column.stride1() == 1 && column.stride2() == 3, "column strides");
   check(column(1, 2) == values[1 + 2 * 3], "column-major access");

@@ -42,6 +42,7 @@ int main() {
   const std::size_t n1 = mesh.n1();
   const std::size_t n2 = mesh.n2();
   const std::size_t cells = n1 * n2;
+  const Shape2 shape{n1, n2};
 
   // Cell-centered coefficients for the paper's test problem.
   std::vector<double> G(cells, 1.0);
@@ -63,9 +64,9 @@ int main() {
   bc.set_dirichlet(Side::Q2Min, q2_min_values);
   bc.set_dirichlet(Side::Q2Max, 0.0);
 
-  // Caller-owned vectors plus explicit, non-owning views.
-  Equation equation(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
-                    make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
+  // Caller-owned vectors plus explicit, non-owning row-major views.
+  Equation equation(make_view2d(G, shape), make_view2d(D11, shape),
+                    make_view2d(D12, shape), make_view2d(D22, shape), bc);
 
   std::vector<double> f_in(cells);
   std::vector<double> f_out(cells, 0.0);
@@ -82,8 +83,8 @@ int main() {
   const double dt = 1.0e-4;
   const int steps = 100;  // final time = 0.01
   for (int step = 1; step <= steps; ++step) {
-    solver.solve(equation, make_view2d(f_in, n1, n2),
-                 make_view2d(f_out, n1, n2), dt);
+    solver.solve(equation, make_view2d(f_in, shape),
+                 make_view2d(f_out, shape), dt);
     std::swap(f_in, f_out);
     if (step == 20 || step == steps) {
       const auto minmax = std::minmax_element(f_in.begin(), f_in.end());

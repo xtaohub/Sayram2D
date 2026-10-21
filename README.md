@@ -265,15 +265,24 @@ The view-based interface remains available:
 std::vector<double> G(n1 * n2, 1.0), D11(n1 * n2, 1.0);
 std::vector<double> D12(n1 * n2, 0.0), D22(n1 * n2, 1.0);
 
-Equation equation_view(make_view2d(G, n1, n2), make_view2d(D11, n1, n2),
-                       make_view2d(D12, n1, n2), make_view2d(D22, n1, n2), bc);
+const Shape2 shape{n1, n2};
+Equation equation_view(make_view2d(G, shape), make_view2d(D11, shape),
+                       make_view2d(D12, shape), make_view2d(D22, shape), bc);
+```
+
+Views of contiguous `std::vector` storage are row-major by default. Use
+`ArrayLayout::column_major` when the vector is stored column-major:
+
+```cpp
+auto column_view = make_view2d(D11, shape, ArrayLayout::column_major);
 ```
 
 `ArrayView2D` can describe a strided slice:
 
 ```cpp
 // Logical (n1,n2) slice of a row-major (n1,n2,2) array, fixed k=1.
-auto view = make_view2d(data.data() + 1, n1, n2, n2 * 2, 2);
+auto view = make_view2d(data.data() + 1, Shape2{n1, n2},
+                       Strides2{n2 * 2, 2});
 ```
 
 The optional `container_adapter.h` provides `make_view2d(container)` for
@@ -294,9 +303,9 @@ std::vector<double> f(n1 * n2 * n3);
 std::vector<double> f_next(n1 * n2 * n3);
 
 auto layer = [&](std::vector<double>& values, std::size_t k) {
-  return make_view2d(values.data() + k, n1, n2,
-                     static_cast<std::ptrdiff_t>(n2 * n3),
-                     static_cast<std::ptrdiff_t>(n3));
+  return make_view2d(values.data() + k, Shape2{n1, n2},
+                     Strides2{static_cast<std::ptrdiff_t>(n2 * n3),
+                             static_cast<std::ptrdiff_t>(n3)});
 };
 
 Mesh mesh(q1_edges, q2_edges);   // shared q1/q2 grid
