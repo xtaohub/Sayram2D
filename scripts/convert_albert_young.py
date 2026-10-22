@@ -142,10 +142,12 @@ def main() -> None:
     e = np.exp(q2_centers)[None, :]
     p = np.asarray(e2p(e))
     dloge = np.asarray(dloge_dp(q2_centers))[None, :]
-    alpha = q1_centers[:, None]
+    # G depends on the equatorial pitch angle alpha0, not local alpha.
+    alpha0_centers = q1_centers[:, None]
 
     denormalize = (E0 / (C * C)) ** 2 * (C * C)
-    G = p ** 2 * (1.30 - 0.56 * np.sin(alpha)) * np.sin(alpha) * np.cos(alpha) / dloge
+    G = (p ** 2 * (1.30 - 0.56 * np.sin(alpha0_centers))
+         * np.sin(alpha0_centers) * np.cos(alpha0_centers) / dloge)
     D11 = daa_i * denormalize * SECONDS_PER_DAY / p ** 2
     D12 = dap_i * denormalize * SECONDS_PER_DAY * dloge / p
     D22 = dpp_i * denormalize * SECONDS_PER_DAY * dloge ** 2
