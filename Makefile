@@ -9,7 +9,6 @@
 #   make distclean remove temporary files, the static library, and the app
 #
 # Edit the four paths below if your installation is in a different place.
-# Tests are configured with CMake/CTest.
 
 CXX ?= c++
 AR ?= ar
@@ -25,7 +24,6 @@ CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
 BUILD_DIR ?= build/sayram2d
-BUILD_LIB := $(BUILD_DIR)/libsayram2d.a
 LIB := lib/libsayram2d.a
 APP_BIN := sayram2d
 EXAMPLE1_BIN := $(BUILD_DIR)/example1
@@ -50,17 +48,10 @@ $(APP_BIN): $(APP_SRCS) $(HEADERS)
 
 app: $(APP_BIN)
 
-# Make examples link the archive built by Make itself. CMake writes its own
-# archive to lib/, so mixing build systems cannot make examples link objects
-# compiled by a different C++ runtime.
-$(BUILD_LIB): $(OBJS)
+# Optional static library for external callers.
+$(LIB): $(OBJS)
 	@mkdir -p $(dir $@)
 	$(AR) rcs $@ $^
-
-# Optional static library for external callers.
-$(LIB): $(BUILD_LIB)
-	@mkdir -p $(dir $@)
-	cp $< $@
 
 $(BUILD_DIR)/%.o: src/%.cc $(HEADERS)
 	@mkdir -p $(dir $@)
@@ -68,16 +59,16 @@ $(BUILD_DIR)/%.o: src/%.cc $(HEADERS)
 
 lib: $(LIB)
 
-$(EXAMPLE1_BIN): src/examples/example1.cc $(BUILD_LIB)
+$(EXAMPLE1_BIN): src/examples/example1.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(BUILD_LIB) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
 
 example1: $(EXAMPLE1_BIN)
 	$(EXAMPLE1_BIN)
 
-$(EXAMPLE2_BIN): src/examples/example2.cc $(BUILD_LIB)
+$(EXAMPLE2_BIN): src/examples/example2.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(BUILD_LIB) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
 
 example2: $(EXAMPLE2_BIN)
 	$(EXAMPLE2_BIN)

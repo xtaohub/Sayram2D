@@ -33,13 +33,11 @@ Requirements:
 
 - C++20 compiler
 - Eigen 3.4 or later (header-only)
-- CMake 3.16 or later, or GNU Make
+- GNU Make
 - `ar` only when building the static library with Make
 - HDF5 C headers/libraries only for the standalone application
 
-The build can be done with either GNU Make or CMake.
-
-#### Method 1: GNU Make
+#### Build with GNU Make
 
 The compiler, Eigen, and HDF5 settings are the variables at the top of the
 [`Makefile`](Makefile). Edit them once for your machine if needed.
@@ -63,29 +61,6 @@ default `make` builds the app directly from source, so it does not require
 
 `make clean` removes temporary Make build files. `make distclean` also removes
 `lib/libsayram2d.a` and the `sayram2d` executable.
-
-#### Method 2: CMake
-
-Build the standalone app:
-
-```bash
-cmake -S . -B build
-cmake --build build
-```
-
-Build only the core library, without the HDF5 application:
-
-```bash
-cmake -S . -B build -DSAYRAM2D_BUILD_APP=OFF
-cmake --build build --target sayram2d
-```
-
-The library target is `sayram2d`; its archive is written to
-`lib/libsayram2d.a`. CMake also builds the lightweight examples; the app target
-is `sayram2d_cli`.
-
-Both build methods write `lib/libsayram2d.a`. If you switch between them, use
-the same C++ compiler or remove the library before rebuilding.
 
 ### Components
 
@@ -380,14 +355,6 @@ make example1
 It builds and runs the example, printing the final minimum and maximum values.
 The executable is also available at `build/sayram2d/example1`.
 
-With CMake:
-
-```bash
-cmake -S . -B build
-cmake --build build --target sayram2d_example1
-./build/sayram2d_example1
-```
-
 ### Example 2: time-dependent coefficients and boundary conditions
 
 [`src/examples/example2.cc`](src/examples/example2.cc) shows how to change the
@@ -412,13 +379,6 @@ make example2
 
 It builds and runs the example. The executable is also available at
 `build/sayram2d/example2`.
-
-With CMake:
-
-```bash
-cmake --build build --target sayram2d_example2
-./build/sayram2d_example2
-```
 
 ### Albert–Young example
 
@@ -461,17 +421,6 @@ The compiler, Eigen, and HDF5 settings are the variables at the top of the
 The standalone app requires the HDF5 C headers and library. Their paths are
 the `HDF5_INCLUDE` and `HDF5_LIBDIR` variables at the top of the
 [`Makefile`](Makefile); edit them if your installation is elsewhere.
-
-With CMake:
-
-```bash
-cmake -S . -B build
-cmake --build build
-./sayram2d app.ini
-```
-
-The CMake target is `sayram2d_cli`; its output name is `sayram2d` and it is
-placed at the repository root, next to `app.ini`.
 
 #### Configuration
 

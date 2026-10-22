@@ -20,8 +20,6 @@ docs/texput.*
 docs/.vscode/
 
 tests/
-CMakeFiles/
-CMakeCache.txt
 albert_young_example.csv
 
 /sayram2d

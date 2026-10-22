@@ -95,14 +95,6 @@ reference:
 - maximum `|delta f10| = 1.07e-14`;
 - minimum `f10 = 1.33e-16` (positive).
 
-In a local checkout that includes the untracked tests directory, run:
-
-```bash
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
 The committed `ALBERT_YOUNG_legacy_0.1d_1d.h5` file contains the legacy PSD
 frames at 0.1 and 1 day for the same 80×80 case advanced to 1 day
 (`dt = 0.002`, `nsteps = 500`, 11 frames at 0, 0.1, ..., 1.0 day). It is used
