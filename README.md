@@ -280,22 +280,26 @@ constants and conversions:
 - `physics::pi`, `physics::speed_of_light`, `physics::electron_rest_energy_mev`;
 - degrees ↔ radians;
 - eV/keV/MeV ↔ joules;
-- kinetic energy ↔ momentum, in SI and in MeV/c.
+- kinetic energy ↔ momentum, with caller-supplied units and speed of light.
 
-The momentum/energy functions take the rest energy as an explicit parameter, so
-the same helpers work for other particles:
+The momentum/energy functions take the rest energy and speed of light as
+explicit parameters, so the same helpers work for other particles and unit
+systems:
 
 ```cpp
 #include "physics.h"
 
 const double rest_energy_j = sayram2d::physics::ev_to_joule(0.511e6);
 const double momentum =
-    sayram2d::physics::momentum_si(
+    sayram2d::physics::momentum(
         sayram2d::physics::mev_to_joule(2.0),  // kinetic energy, 2 MeV
-        rest_energy_j);
+        rest_energy_j,
+        sayram2d::physics::speed_of_light);
 ```
 
-`physics::momentum_mev_c(kinetic_mev)` returns momentum in MeV/c.
+The arguments must use a consistent unit system. For SI units, use joules and
+metres per second; for `MeV` and `MeV/c`, pass `c = 1`. The Albert–Young case
+uses the latter convention.
 
 ### Ownership and lifetime
 

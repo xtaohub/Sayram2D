@@ -15,7 +15,9 @@ constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
 double albert_young_initial(double alpha, double log_energy) noexcept {
   const double energy = std::exp(log_energy);
-  const double p = physics::momentum_mev_c(energy);
+  // Natural units for this case: E in MeV and p in MeV/c, so c = 1.
+  const double p = physics::momentum(
+      energy, physics::electron_rest_energy_mev, 1.0);
   return std::exp(-(energy - 0.2) / 0.1) *
              (std::sin(alpha) -
               std::sin(physics::degrees_to_radians(5.0))) /

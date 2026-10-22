@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "physics.h"
+
 namespace sayram2d::radiation_belt {
 
 // Common radiation-belt helper functions for the (alpha0, log E) coordinates.
@@ -15,19 +17,16 @@ namespace sayram2d::radiation_belt {
 //   p               momentum in units consistent with E
 //   rest_energy    particle rest energy, in the same energy unit as E
 //
-// The formulas only require E and rest_energy to use the same energy unit.
-// For example, log(E/MeV) requires rest_energy in MeV; log(E/GeV) requires
-// rest_energy in GeV.
-//
-// Natural units with c = 1 are used. With E in MeV and rest_energy in MeV,
-// p is in MeV/c. In SI units, p = sqrt(E(E + 2 E0)) / c, and dloge_dp gains
-// a factor of c.
+// The formulas require E, rest_energy, and speed_of_light to use a consistent
+// unit system. For example, with E in MeV and p in MeV/c, pass c = 1; with SI
+// units, pass energy in joules and c in m/s.
 
 // d log(E) / dp.
-inline double dloge_dp(double log_e, double rest_energy) noexcept {
+inline double dloge_dp(double log_e, double rest_energy,
+                       double speed_of_light) noexcept {
   const double energy = std::exp(log_e);
-  const double p = std::sqrt(energy * (energy + 2.0 * rest_energy));
-  return p / (energy * (energy + rest_energy));
+  const double p = physics::momentum(energy, rest_energy, speed_of_light);
+  return speed_of_light * p / (energy * (energy + rest_energy));
 }
 
 // Jacobian for (alpha0, p) coordinates.
@@ -39,10 +38,12 @@ inline double G_alpha0_p(double alpha0, double p) noexcept {
 
 // Jacobian for (alpha0, log E) coordinates.
 inline double G_alpha0_loge(double alpha0, double log_e,
-                            double rest_energy) noexcept {
+                            double rest_energy,
+                            double speed_of_light) noexcept {
   const double energy = std::exp(log_e);
-  const double p = std::sqrt(energy * (energy + 2.0 * rest_energy));
-  return G_alpha0_p(alpha0, p) / dloge_dp(log_e, rest_energy);
+  const double p = physics::momentum(energy, rest_energy, speed_of_light);
+  return G_alpha0_p(alpha0, p) /
+         dloge_dp(log_e, rest_energy, speed_of_light);
 }
 
 }  // namespace sayram2d::radiation_belt

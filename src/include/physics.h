@@ -6,7 +6,6 @@ namespace sayram2d::physics {
 
 inline constexpr double pi = 3.141592653589793238462643383279502884;
 inline constexpr double speed_of_light = 299792458.0;  // m/s
-inline constexpr double c = speed_of_light;
 inline constexpr double electron_volt = 1.602176634e-19;  // J
 inline constexpr double electron_rest_energy_mev = 0.511875;  // MeV
 inline constexpr double seconds_per_day = 86400.0;
@@ -35,44 +34,26 @@ constexpr double joule_to_mev(double joule) noexcept {
 }
 
 // Relativistic kinetic-energy/momentum relations.
-// The energy arguments are kinetic energies; rest_energy is the particle rest
-// energy. SI versions use joules and return kg m/s (or joules).
-inline double momentum_si(double kinetic_energy_j, double rest_energy_j) noexcept {
-  return std::sqrt(kinetic_energy_j * (kinetic_energy_j + 2.0 * rest_energy_j)) /
+//
+// The three arguments must use a consistent unit system:
+//
+//   SI:       kinetic_energy and rest_energy in joules,
+//             speed_of_light in m/s, momentum in kg m/s;
+//   MeV/c:    kinetic_energy and rest_energy in MeV,
+//             speed_of_light = 1, momentum in MeV/c.
+//
+// The caller chooses the unit system; these functions do not assume one.
+inline double momentum(double kinetic_energy, double rest_energy,
+                       double speed_of_light) noexcept {
+  return std::sqrt(kinetic_energy *
+                   (kinetic_energy + 2.0 * rest_energy)) /
          speed_of_light;
 }
 
-inline double kinetic_energy_si(double momentum, double rest_energy_j) noexcept {
+inline double kinetic_energy(double momentum, double rest_energy,
+                             double speed_of_light) noexcept {
   const double pc = momentum * speed_of_light;
-  return std::sqrt(pc * pc + rest_energy_j * rest_energy_j) - rest_energy_j;
-}
-
-// Convenience for callers working directly in electron-volt units.
-inline double momentum_si_from_ev(double kinetic_energy_ev,
-                                  double rest_energy_ev) noexcept {
-  return momentum_si(ev_to_joule(kinetic_energy_ev),
-                     ev_to_joule(rest_energy_ev));
-}
-
-inline double kinetic_energy_si_from_ev(double momentum,
-                                        double rest_energy_ev) noexcept {
-  return kinetic_energy_si(momentum, ev_to_joule(rest_energy_ev));
-}
-
-// MeV/c momentum for kinetic and rest energies expressed in MeV.
-inline double momentum_mev_c(double kinetic_energy_mev,
-                             double rest_energy_mev =
-                                 electron_rest_energy_mev) noexcept {
-  return std::sqrt(kinetic_energy_mev *
-                   (kinetic_energy_mev + 2.0 * rest_energy_mev));
-}
-
-inline double kinetic_energy_mev_from_momentum_mev_c(
-    double momentum_mev_c,
-    double rest_energy_mev = electron_rest_energy_mev) noexcept {
-  return std::sqrt(momentum_mev_c * momentum_mev_c +
-                   rest_energy_mev * rest_energy_mev) -
-         rest_energy_mev;
+  return std::sqrt(pc * pc + rest_energy * rest_energy) - rest_energy;
 }
 
 }  // namespace sayram2d::physics
