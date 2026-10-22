@@ -402,7 +402,7 @@ void Solver::assemble(const Equation& equation, ArrayView2D<const double> f_in,
         triplets_.emplace_back(K, K, uk * (1.0 + dt * inv_tau));
         rhs_(K) += uk * f_old;
       } else {
-        // Negative inverse loss is a source: R += G*area*f*(-inv_tau)*dt.
+        // Negative inverse loss is a source: R += G*area*f*(-inv_tau).
         triplets_.emplace_back(K, K, uk);
         rhs_(K) += uk * f_old * (1.0 - dt * inv_tau);
       }
