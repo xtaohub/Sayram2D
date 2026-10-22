@@ -206,10 +206,7 @@ auto contiguous_view = make_view2d(pointer, n1, n2);
 ### Equation
 
 An `Equation` combines the four diffusion coefficients, an optional inverse
-loss, and a boundary-condition object. It does not own any of them. This is
-intentional: coefficients and boundary values are time-dependent, may be slices
-of a larger array, and should not be copied. Grouping them also keeps the solver
-call simple: `solver.solve(equation, f_in, f_out, dt)`.
+loss, and a boundary-condition object. It does not own any of them.
 
 ```cpp
 Equation equation(G.view(), D11.view(), D12.view(), D22.view(), bc);
@@ -219,7 +216,10 @@ equation.set_loss(0.0);
 ```
 
 The coefficients are `ArrayView2D<const double>` views. They are typically
-obtained from `Array2D::view()` or from explicit slices of larger arrays.
+obtained from `Array2D::view()` or from explicit slices of larger arrays. This
+is intentional: coefficients and boundary values are time-dependent, may be
+slices of a larger array, and should not be copied. Grouping them also keeps the
+solver call simple: `solver.solve(equation, f_in, f_out, dt)`.
 
 Coefficient values and boundary values may be changed in place between solves.
 The caller must keep the coefficient buffers and `BoundaryConditions` object
