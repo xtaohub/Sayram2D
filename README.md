@@ -220,7 +220,8 @@ obtained from `Array2D::view()` or from explicit slices of larger arrays.
 
 Coefficient values and boundary values may be changed in place between solves.
 The caller must keep the coefficient buffers and `BoundaryConditions` object
-alive for as long as the equation is used.
+alive for as long as the equation is used. An example is given in
+[Example 2](#example-2-time-dependent-coefficients-and-boundary-conditions).
 
 ### Boundary conditions
 
