@@ -26,6 +26,9 @@ add_library(sayram2d
   src/boundary_conditions.cc
   src/solver.cc
 )
+set_target_properties(sayram2d PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+)
 target_include_directories(sayram2d PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )

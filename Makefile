@@ -23,7 +23,7 @@ CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
 HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
 BUILD_DIR ?= build/sayram2d
-LIB := $(BUILD_DIR)/libsayram2d.a
+LIB := lib/libsayram2d.a
 APP_BIN := sayram2d
 EXAMPLE1_BIN := $(BUILD_DIR)/example1
 EXAMPLE2_BIN := $(BUILD_DIR)/example2
@@ -47,7 +47,7 @@ app: $(APP_BIN)
 
 # Optional static library for external callers.
 $(LIB): $(OBJS)
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(AR) rcs $@ $^
 
 $(BUILD_DIR)/%.o: src/%.cc
@@ -72,3 +72,4 @@ example2: $(EXAMPLE2_BIN)
 
 clean:
 	rm -rf $(BUILD_DIR) $(APP_BIN)
+	rm -f $(LIB)

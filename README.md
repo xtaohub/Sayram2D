@@ -57,7 +57,7 @@ make lib
 ```
 
 The library itself does not require HDF5. `make lib` uses `ar` to archive the
-compiled objects into `libsayram2d.a`; the examples link that archive. The
+compiled objects into `lib/libsayram2d.a`; the examples link that archive. The
 default `make` builds the app directly from source, so it does not require
 `ar`.
 
@@ -77,8 +77,9 @@ cmake -S . -B build -DSAYRAM2D_BUILD_APP=OFF
 cmake --build build --target sayram2d
 ```
 
-The library target is `sayram2d`. CMake also builds the lightweight examples;
-the app target is `sayram2d_cli`.
+The library target is `sayram2d`; its archive is written to
+`lib/libsayram2d.a`. CMake also builds the lightweight examples; the app target
+is `sayram2d_cli`.
 
 ### Components
 
@@ -653,6 +654,7 @@ scripts/            data conversion and plotting
 figures/            generated comparison figures
 data/albert_young/  raw and preprocessed Albert-Young data
 docs/               numerical algorithm and design notes
+lib/                generated static library (libsayram2d.a)
 ```
 
 ## License and Copyright
