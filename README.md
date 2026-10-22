@@ -153,6 +153,11 @@ stride2 = n1
 `ArrayView2D` can also represent arbitrary strides, including row-major and
 noncontiguous slices.
 
+The view does not check whether its computed memory offsets remain inside the
+underlying allocation. It does not know the allocation size, and arbitrary
+strides are not bounded by `n1 * n2`; the caller must ensure that the pointer
+and strides describe valid memory.
+
 #### Memory model
 
 ```cpp
