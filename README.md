@@ -577,9 +577,7 @@ with `g++ 16.2` and `-O2`:
 | Solver loop only, median of 3 runs | 3.84 s |
 | Configuration, setup, and I/O difference | ~0.01 s |
 
-The solver dominates this case. For solver-performance comparisons, time the
-core loop; for user-facing runtime, report the full application time. Both are
-shown here.
+The solver dominates this case.
 
 #### Data
 
