@@ -145,6 +145,8 @@ def main() -> None:
     # G depends on the equatorial pitch angle alpha0, not local alpha.
     alpha0_centers = q1_centers[:, None]
 
+    # Jay Albert's diffusion coefficients use a normalized format; this factor
+    # restores the physical momentum scale before converting to D11/D12/D22.
     denormalize = (E0 / (C * C)) ** 2 * (C * C)
     G = (p ** 2 * (1.30 - 0.56 * np.sin(alpha0_centers))
          * np.sin(alpha0_centers) * np.cos(alpha0_centers) / dloge)
