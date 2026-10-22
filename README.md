@@ -132,9 +132,9 @@ and iteration. Its layout is always column-major:
 Array2D(i, j) == storage[i + j*n1]
 ```
 
-This makes a fixed `q3` plane contiguous for a column-major `(q1,q2,q3)` array.
-HDF5 files remain row-major at the serialization boundary; the I/O layer
-converts explicitly.
+We chose column-major for `Array2D` because this makes a fixed `q3` plane
+contiguous for a column-major `(q1,q2,q3)` array. HDF5 files remain row-major at
+the serialization boundary; the I/O layer converts explicitly.
 
 ### ArrayView2D
 
