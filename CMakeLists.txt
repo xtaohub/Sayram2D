@@ -21,38 +21,37 @@ if(NOT TARGET Eigen3::Eigen)
   endif()
 endif()
 
-add_library(libsayram2d
+add_library(sayram2d
   src/mesh.cc
   src/boundary_conditions.cc
   src/solver.cc
 )
-set_target_properties(libsayram2d PROPERTIES
-  OUTPUT_NAME sayram2d
+set_target_properties(sayram2d PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
-target_include_directories(libsayram2d PUBLIC
+target_include_directories(sayram2d PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 if(TARGET Eigen3::Eigen)
-  target_link_libraries(libsayram2d PUBLIC Eigen3::Eigen)
+  target_link_libraries(sayram2d PUBLIC Eigen3::Eigen)
 else()
-  target_include_directories(libsayram2d SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
+  target_include_directories(sayram2d SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 endif()
-target_compile_definitions(libsayram2d PUBLIC EIGEN_NO_DEBUG)
+target_compile_definitions(sayram2d PUBLIC EIGEN_NO_DEBUG)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(libsayram2d PRIVATE -Wall -Wextra)
+  target_compile_options(sayram2d PRIVATE -Wall -Wextra)
 endif()
 
 add_executable(sayram2d_example1
   src/examples/example1.cc
 )
-target_link_libraries(sayram2d_example1 PRIVATE libsayram2d)
+target_link_libraries(sayram2d_example1 PRIVATE sayram2d)
 
 add_executable(sayram2d_example2
   src/examples/example2.cc
 )
-target_link_libraries(sayram2d_example2 PRIVATE libsayram2d)
+target_link_libraries(sayram2d_example2 PRIVATE sayram2d)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(sayram2d_example1 PRIVATE -Wall -Wextra)
@@ -87,7 +86,7 @@ if(SAYRAM2D_BUILD_APP)
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app
     ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/albert_young
   )
-  target_link_libraries(sayram2d_app_core PUBLIC libsayram2d)
+  target_link_libraries(sayram2d_app_core PUBLIC sayram2d)
   if(TARGET HDF5::HDF5)
     target_link_libraries(sayram2d_app_core PUBLIC HDF5::HDF5)
   else()
@@ -111,20 +110,20 @@ endif()
 
 if(BUILD_TESTING AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sayram2d.cc)
   add_executable(sayram2d_tests tests/test_sayram2d.cc)
-  target_link_libraries(sayram2d_tests PRIVATE libsayram2d)
+  target_link_libraries(sayram2d_tests PRIVATE sayram2d)
   add_test(NAME sayram2d_unit COMMAND sayram2d_tests)
   set_tests_properties(sayram2d_unit PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_executable(sayram2d_reference tests/new_reference.cc)
-  target_link_libraries(sayram2d_reference PRIVATE libsayram2d)
+  target_link_libraries(sayram2d_reference PRIVATE sayram2d)
   add_test(NAME sayram2d_reference_generate
     COMMAND sayram2d_reference build/new_reference)
   set_tests_properties(sayram2d_reference_generate PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_executable(sayram2d_albert_young tests/albert_young_reference.cc)
-  target_link_libraries(sayram2d_albert_young PRIVATE libsayram2d)
+  target_link_libraries(sayram2d_albert_young PRIVATE sayram2d)
   add_test(NAME sayram2d_albert_young_run
     COMMAND sayram2d_albert_young ${CMAKE_CURRENT_SOURCE_DIR}/data/albert_young/ALBERT_YOUNG_80x80.bin
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/albert_young/new_reference.csv)

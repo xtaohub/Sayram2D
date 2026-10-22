@@ -74,12 +74,12 @@ Build only the core library, without the HDF5 application:
 
 ```bash
 cmake -S . -B build -DSAYRAM2D_BUILD_APP=OFF
-cmake --build build --target libsayram2d
+cmake --build build --target sayram2d
 ```
 
-The library target is `libsayram2d`; its output name is `sayram2d`, so the
-archive is written to `lib/libsayram2d.a`. CMake also builds the lightweight
-examples; the app target is `sayram2d_cli`.
+The library target is `sayram2d`; its archive is written to
+`lib/libsayram2d.a`. CMake also builds the lightweight examples; the app target
+is `sayram2d_cli`.
 
 ### Components
 
