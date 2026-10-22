@@ -58,7 +58,7 @@ def main() -> int:
     parser.add_argument("--new", type=Path,
                         default=Path("output/AlbertYoung/AlbertYoung_data.h5"))
     parser.add_argument("--legacy", type=Path,
-                        default=Path("tests/albert_young/legacy_reference_1day.h5"))
+                        default=Path("data/albert_young/ALBERT_YOUNG_legacy_0.1d_1d.h5"))
     parser.add_argument("--outdir", type=Path, default=Path("figures"))
     args = parser.parse_args()
 

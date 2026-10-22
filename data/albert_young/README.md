@@ -22,8 +22,10 @@ units.
 The standalone application reads the self-describing HDF5 file
 `ALBERT_YOUNG_80x80.h5`. The legacy `S2DAYD1` binary
 `ALBERT_YOUNG_80x80.bin` is retained only for the existing regression harness.
+The `ALBERT_YOUNG_legacy_0.1d_1d.h5` file stores the legacy PSD frames at 0.1
+and 1 day used by the plotting comparison.
 
-Both were generated with the default conversion settings:
+The converted HDF5 and binary files were generated with the default settings:
 
 ```
 alpha0 in [5, 90] degrees, n1 = 80
@@ -124,8 +126,9 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The local `tests/albert_young/legacy_reference_1day.h5` fixture is the legacy
-standalone application output for the same 80×80 case advanced to 1 day
+The committed `ALBERT_YOUNG_legacy_0.1d_1d.h5` file contains the legacy PSD
+frames at 0.1 and 1 day for the same 80×80 case advanced to 1 day
 (`dt = 0.002`, `nsteps = 500`, 11 frames at 0, 0.1, ..., 1.0 day). It is used
-by `python3 scripts/plot_albert_young.py` for the 0.5/2 MeV profile comparison
-when the optional tests directory is present.
+by `python3 scripts/plot_albert_young.py` for the 0.5/2 MeV profile comparison.
+It stores `alpha0`, `logEN`, the full time vector, and `/f/1` and `/f/10` in the
+legacy row-major layout.

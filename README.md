@@ -544,8 +544,8 @@ python3 scripts/plot_albert_young.py
 0, 0.1, ..., 1.0 day. The single result is
 `output/AlbertYoung/AlbertYoung_data.h5`, containing both time slices.
 
-When a legacy 1-day reference is available, the plot script compares results at
-0.5 and 2 MeV for 0.1 and 1 day:
+The plot script compares results with the bundled legacy PSD frames at 0.1 and
+1 day at 0.5 and 2 MeV:
 
 - [`figures/albert_young_profiles_log.png`](figures/albert_young_profiles_log.png)
   — profiles with a logarithmic `f` axis;
