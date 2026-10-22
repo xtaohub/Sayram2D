@@ -13,8 +13,8 @@ This version builds upon the original Sayram2D developed by Xin Tao and Peng
 Peng. The redesign was led and reviewed by Xin Tao, with implementation carried
 out by DeepSeek V4.1 Flash using DeepSeek Harness.
 
-For questions about using Sayram2D or inquiries regarding potential
-collaborations, please contact Xin Tao at xtao@ustc.edu.cn.
+For questions about using Sayram2D, bug reports, or inquiries regarding
+potential collaborations, please contact Xin Tao at xtao@ustc.edu.cn.
 
 If you use Sayram2D in your research, coauthorship with Xin Tao or any other
 Sayram2D developer is not required. However, please cite the following
