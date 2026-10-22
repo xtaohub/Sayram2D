@@ -18,6 +18,10 @@ namespace sayram2d::radiation_belt {
 // The formulas only require E and rest_energy to use the same energy unit.
 // For example, log(E/MeV) requires rest_energy in MeV; log(E/GeV) requires
 // rest_energy in GeV.
+//
+// Natural units with c = 1 are used. With E in MeV and rest_energy in MeV,
+// p is in MeV/c. In SI units, p = sqrt(E(E + 2 E0)) / c, and dloge_dp gains
+// a factor of c.
 
 // d log(E) / dp.
 inline double dloge_dp(double log_e, double rest_energy) noexcept {
