@@ -37,8 +37,6 @@ Requirements:
 - `ar` only when building the static library with Make
 - HDF5 C headers/libraries only for the standalone application
 
-#### Build with GNU Make
-
 The compiler, Eigen, and HDF5 settings are the variables at the top of the
 [`Makefile`](Makefile). Edit them once for your machine if needed.
 
