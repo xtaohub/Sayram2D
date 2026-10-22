@@ -11,7 +11,8 @@ application is one example; HDF5 is used by that example, not by the library.
 
 This version builds upon the original Sayram2D developed by Xin Tao and Peng
 Peng. The redesign was led and reviewed by Xin Tao, with implementation carried
-out by DeepSeek V4.1 Flash using DeepSeek Harness.
+out by DeepSeek V4.1 Flash using DeepSeek Harness. Its purpose was to make the
+code modular, easier to maintain, and easier to use in 3D or 4D applications.
 
 For questions about using Sayram2D, bug reports, or inquiries regarding
 potential collaborations, please contact Xin Tao at xtao@ustc.edu.cn.
