@@ -1,5 +1,8 @@
 # Albert–Young diffusion data
 
+The original data were provided by Jay M. Albert. The tables and formulas
+below describe the converted, simulation-ready form used by Sayram2D.
+
 The raw input is the Albert–Young chorus diffusion table:
 
 ```
@@ -20,25 +23,22 @@ units.
 ## Converted files
 
 The standalone application reads the self-describing HDF5 file
-`ALBERT_YOUNG_80x80.h5`. The legacy `S2DAYD1` binary
-`ALBERT_YOUNG_80x80.bin` is retained only for the existing regression harness.
-The `ALBERT_YOUNG_legacy_0.1d_1d.h5` file stores the legacy PSD frames at 0.1
-and 1 day used by the plotting comparison.
+`ALBERT_YOUNG_80x80.h5`. The `ALBERT_YOUNG_legacy_0.1d_1d.h5` file stores the
+legacy PSD frames at 0.1 and 1 day used by the plotting comparison.
 
-The converted HDF5 and binary files were generated with the default settings:
+The converted HDF5 file was generated with the default settings:
 
 ```
 alpha0 in [5, 90] degrees, n1 = 80
 E in [0.2, 5] MeV, log-spaced, n2 = 80
 ```
 
-Reproduce both with:
+Reproduce it with:
 
 ```bash
 python3 scripts/convert_albert_young.py \
   --input data/albert_young/AlbertYoung_chorus.h5 \
   --output data/albert_young/ALBERT_YOUNG_80x80.h5 \
-  --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin \
   --n1 80 --n2 80 --alpha-min 5 --alpha-max 90 --E-min 0.2 --E-max 5
 ```
 
@@ -68,27 +68,6 @@ coefficient_location = "cell centers"
 `(n1+1, n2+1)`. The HDF5 flat buffer uses row-major order for file
 compatibility; the application reads the datasets explicitly by name.
 
-### Legacy regression binary
-
-The S2DAYD1 binary has the same arrays in a positional layout:
-
-```text
-magic[8] = b"S2DAYD1"
-int32 version = 1
-int32 n1, int32 n2
-float64 q1_edges[n1+1]
-float64 q2_edges[n2+1]
-float64 q1_centers[n1]
-float64 q2_centers[n2]
-float64 G[n1*n2]       row-major, index i*n2+j (legacy binary)
-float64 D11[n1*n2]
-float64 D12[n1*n2]
-float64 D22[n1*n2]
-```
-
-It is used by `tests/albert_young_case.h` so the numerical regression tests do
-not require HDF5. The standalone app does not read this binary.
-
 ## Conversion formulas
 
 With `E = exp(q2)` and `p = sqrt(E(E + 2 E0))`, `E0 = 0.511875 MeV`:
@@ -109,10 +88,8 @@ The interpolation uses the same alpha/logE bilinear rule as the legacy
 
 ## Verification
 
-`tests/albert_young_reference.cc` runs the real 80×80 case for 10 steps at
-`dt = 0.002` days using the legacy binary fixture. The standalone app reads the
-HDF5 file and writes a matching HDF5 result. Both results match the legacy
-Albert–Young run saved in `tests/albert_young/legacy_reference.csv`:
+The converted 80×80 case is validated against the legacy Albert–Young
+reference:
 
 - maximum `|delta f0| = 8.88e-16`;
 - maximum `|delta f10| = 1.07e-14`;
