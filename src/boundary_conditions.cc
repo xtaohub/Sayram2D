@@ -21,6 +21,16 @@ std::size_t expected_size(const Mesh& mesh, Side side) {
   return 0;
 }
 
+const char* side_name(Side side) noexcept {
+  switch (side) {
+    case Side::Q1Min: return "Q1Min";
+    case Side::Q1Max: return "Q1Max";
+    case Side::Q2Min: return "Q2Min";
+    case Side::Q2Max: return "Q2Max";
+  }
+  return "unknown";
+}
+
 bool nearly_equal(double a, double b) {
   const double scale = std::max({1.0, std::abs(a), std::abs(b)});
   return std::abs(a - b) <= 1e-12 * scale;
@@ -84,15 +94,26 @@ void BoundaryConditions::validate(const Mesh& mesh) const {
       if (!std::isfinite(d.constant_value)) {
         throw std::invalid_argument("Dirichlet boundary value is not finite");
       }
+      if (d.constant_value < 0.0) {
+        throw std::invalid_argument(
+            std::string("Dirichlet boundary value on ") + side_name(side) +
+            " must be nonnegative");
+      }
     } else {
       const std::size_t expected = expected_size(mesh, side);
       if (d.values.size() != expected) {
         throw std::invalid_argument(
             "Dirichlet boundary data has the wrong length for this mesh");
       }
-      for (double value : d.values) {
+      for (std::size_t k = 0; k < d.values.size(); ++k) {
+        const double value = d.values[k];
         if (!std::isfinite(value)) {
           throw std::invalid_argument("Dirichlet boundary value is not finite");
+        }
+        if (value < 0.0) {
+          throw std::invalid_argument(
+              std::string("Dirichlet boundary value on ") + side_name(side) +
+              " at vertex " + std::to_string(k) + " must be nonnegative");
         }
       }
     }

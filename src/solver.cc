@@ -134,6 +134,11 @@ void Solver::validate(const Equation& equation, ArrayView2D<const double> f_in,
         throw std::invalid_argument(
             "Solver::solve: non-finite coefficient, input, or loss value");
       }
+      if (f < 0.0) {
+        throw std::invalid_argument(
+            "Solver::solve: f_in must be nonnegative; negative value at cell (" +
+            std::to_string(i) + ", " + std::to_string(j) + ")");
+      }
       if (!(g > 0.0)) {
         throw std::invalid_argument("Solver::solve: G must be positive");
       }
