@@ -21,12 +21,13 @@ namespace sayram2d::radiation_belt {
 // unit system. For example, with E in MeV and p in MeV/c, pass c = 1; with SI
 // units, pass energy in joules and c in m/s.
 
-// d log(E) / dp.
+// d log(E) / dp = p c^2 / [E (E + E0)].
 inline double dloge_dp(double log_e, double rest_energy,
                        double speed_of_light) noexcept {
   const double energy = std::exp(log_e);
   const double p = physics::momentum(energy, rest_energy, speed_of_light);
-  return speed_of_light * p / (energy * (energy + rest_energy));
+  return speed_of_light * speed_of_light * p /
+         (energy * (energy + rest_energy));
 }
 
 // Jacobian for (alpha0, p) coordinates.
