@@ -151,8 +151,7 @@ stride2 = n1
 ```
 
 `ArrayView2D` can also represent arbitrary strides, including row-major and
-noncontiguous slices, but all contiguous views created by this library use the
-column-major convention.
+noncontiguous slices.
 
 #### Memory model
 
