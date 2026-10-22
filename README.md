@@ -84,6 +84,9 @@ The library target is `sayram2d`; its archive is written to
 `lib/libsayram2d.a`. CMake also builds the lightweight examples; the app target
 is `sayram2d_cli`.
 
+Both build methods write `lib/libsayram2d.a`. If you switch between them, use
+the same C++ compiler or remove the library before rebuilding.
+
 ### Components
 
 | Component | Responsibility |
@@ -246,6 +249,7 @@ bc.validate(mesh);  // optional explicit validation
 ```
 
 - `ZeroFlux` is the default on all four sides.
+- Negative Dirichlet values are rejected; zero is allowed.
 - Dirichlet data are specified at boundary vertices:
   - `Q1Min`/`Q1Max` require `n2 + 1` values or a scalar constant;
   - `Q2Min`/`Q2Max` require `n1 + 1` values or a scalar constant.
@@ -264,9 +268,9 @@ solver.solve(equation, f_in.view(), f_out.view(), dt);
 ```
 
 `f_in` and `f_out` are `ArrayView2D` views. The same storage may be used for
-both arguments for an in-place solve. A `Solver` is reusable across sequential
-solves on the same mesh, but it must not be used concurrently from multiple
-threads.
+both arguments for an in-place solve. `f_in` must be nonnegative; negative
+values are rejected. A `Solver` is reusable across sequential solves on the
+same mesh, but it must not be used concurrently from multiple threads.
 
 The discretization, positivity-preserving flux construction, and matrix
 assembly are described in
@@ -300,6 +304,16 @@ const double momentum =
 The arguments must use a consistent unit system. For SI units, use joules and
 metres per second; for `MeV` and `MeV/c`, pass `c = 1`. The Albert–Young case
 uses the latter convention.
+
+[`src/include/radiation_belt.h`](src/include/radiation_belt.h) provides optional
+radiation-belt helpers for the `(alpha0, log E)` coordinates:
+
+- `dloge_dp(log_e, rest_energy, speed_of_light)`;
+- `G_alpha0_p(alpha0, p)`;
+- `G_alpha0_loge(alpha0, log_e, rest_energy, speed_of_light)`.
+
+These helpers are not used by `Equation` or `Solver`; callers still supply the
+`G` field.
 
 ### Ownership and lifetime
 
@@ -568,7 +582,7 @@ dependency-free library examples are separate, under [`src/examples/`](src/examp
 
 The following single-threaded timing was measured on an Apple M2 Max
 (12-core CPU, 64 GB memory) running macOS 26.6.2, using the Makefile build
-with `g++ 16.2` and `-O2`:
+with Apple clang 17.0.0 and `-O2`:
 
 - grid: 80 × 80 (6400 cells), `alpha0` in [5, 90] degrees, log-spaced `E` in
   [0.2, 5] MeV;
@@ -577,9 +591,9 @@ with `g++ 16.2` and `-O2`:
 
 | Measurement | Time |
 |---|---:|
-| Full application, median of 3 runs | 3.86 s |
-| Solver loop only, median of 3 runs | 3.84 s |
-| Configuration, setup, and I/O difference | ~0.01 s |
+| Full application, median of 5 runs | 3.84 s |
+| Solver loop only, median of 5 runs | 3.70 s |
+| Configuration, setup, and I/O difference | ~0.1 s |
 
 The solver dominates this case.
 

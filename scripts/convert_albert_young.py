@@ -16,7 +16,7 @@ The primary output is a self-describing HDF5 file:
   /D22             float64[n1,n2]
 
 The HDF5 attributes document the index order and coordinate units. The
-standalone application reads this HDF5 file. An optional S2DAYD1 binary can
+standalone application reads this HDF5 file. An optional legacy binary can
 also be written for the pre-existing regression harness:
 
   --binary-output data/albert_young/ALBERT_YOUNG_80x80.bin
@@ -97,7 +97,7 @@ def main() -> None:
                         default="data/albert_young/ALBERT_YOUNG_80x80.h5",
                         help="HDF5 output file")
     parser.add_argument("--binary-output", default=None,
-                        help="optional legacy S2DAYD1 binary output")
+                        help="optional legacy binary output")
     parser.add_argument("--n1", type=int, default=80)
     parser.add_argument("--n2", type=int, default=80)
     parser.add_argument("--alpha-min", type=float, default=5.0,
