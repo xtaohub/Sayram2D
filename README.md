@@ -156,7 +156,9 @@ noncontiguous slices.
 The view does not check whether its computed memory offsets remain inside the
 underlying allocation. It does not know the allocation size, and arbitrary
 strides are not bounded by `n1 * n2`; the caller must ensure that the pointer
-and strides describe valid memory.
+and strides describe valid memory. This is why `ArrayView2D` is a low-level
+type: we recommend using `Array2D` for 2D problems and designing an analogous
+`Array3D` container for 3D applications.
 
 #### Memory model
 
