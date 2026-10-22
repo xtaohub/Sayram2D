@@ -560,6 +560,27 @@ PDF versions are alongside them.
 The application entry point is [`src/examples/albert_young/main.cc`](src/examples/albert_young/main.cc). The
 dependency-free library examples are separate, under [`src/examples/`](src/examples/).
 
+#### Performance
+
+The following single-threaded timing was measured on an Apple M2 Max
+(12-core CPU, 64 GB memory) running macOS 26.6.2, using the Makefile build
+with `g++ 16.2` and `-O2`:
+
+- grid: 80 × 80 (6400 cells), `alpha0` in [5, 90] degrees, log-spaced `E` in
+  [0.2, 5] MeV;
+- time step: `0.002` days;
+- 500 steps, for a total of 1.0 day, with 11 saved frames.
+
+| Measurement | Time |
+|---|---:|
+| Full application, median of 3 runs | 3.86 s |
+| Solver loop only, median of 3 runs | 3.84 s |
+| Configuration, setup, and I/O difference | ~0.01 s |
+
+The solver dominates this case. For solver-performance comparisons, time the
+core loop; for user-facing runtime, report the full application time. Both are
+shown here.
+
 #### Data
 
 The raw tables are interpolated once by `scripts/convert_albert_young.py` into
