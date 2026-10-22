@@ -61,6 +61,9 @@ compiled objects into `lib/libsayram2d.a`; the examples link that archive. The
 default `make` builds the app directly from source, so it does not require
 `ar`.
 
+`make clean` removes temporary Make build files. `make distclean` also removes
+`lib/libsayram2d.a` and the `sayram2d` executable.
+
 #### Method 2: CMake
 
 Build the standalone app:

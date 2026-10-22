@@ -5,6 +5,8 @@
 #   make lib      build the static library (requires ar)
 #   make example1  build and run the time-independent paper problem
 #   make example2  build and run the time-dependent example
+#   make clean     remove temporary Make build files
+#   make distclean remove temporary files, the static library, and the app
 #
 # Edit the four paths below if your installation is in a different place.
 # Tests are configured with CMake/CTest.
@@ -34,7 +36,7 @@ APP_SRCS := src/examples/albert_young/main.cc \
             src/examples/albert_young/albert_young.cc $(CORE_SRCS)
 OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
-.PHONY: all app lib example1 example2 clean
+.PHONY: all app lib example1 example2 clean distclean
 
 all: app
 
@@ -71,5 +73,7 @@ example2: $(EXAMPLE2_BIN)
 	$(EXAMPLE2_BIN)
 
 clean:
-	rm -rf $(BUILD_DIR) $(APP_BIN)
-	rm -f $(LIB)
+	rm -rf $(BUILD_DIR)
+
+distclean: clean
+	rm -f $(LIB) $(APP_BIN)
