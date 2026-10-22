@@ -88,7 +88,7 @@ is `sayram2d_cli`.
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. |
 | `sayram2d::Array2D<T>` | Owning, contiguous, column-major 2-D array. Provides indexing, sizing, fill, iteration, and `view()`. |
 | `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Used by `Equation` and `Solver` and for slices of larger arrays. |
-| `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary **vertices**. |
+| `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices. |
 | `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss, and a non-owning reference to the caller-owned boundary configuration. |
 | `sayram2d::Solver` | Reusable sparse-matrix workspace and NTPFA assembly. One call to `solve` performs one documented linear solve. |
 
@@ -243,7 +243,7 @@ bc.validate(mesh);  // optional explicit validation
 ```
 
 - `ZeroFlux` is the default on all four sides.
-- Dirichlet data are specified at boundary **vertices**:
+- Dirichlet data are specified at boundary vertices:
   - `Q1Min`/`Q1Max` require `n2 + 1` values or a scalar constant;
   - `Q2Min`/`Q2Max` require `n1 + 1` values or a scalar constant.
 - Two Dirichlet sides meeting at a corner must agree; the solver checks this
