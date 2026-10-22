@@ -92,8 +92,8 @@ class Mesh {
   bool neighbor(Ind cell, Side side, Ind* neighbor) const noexcept;
 
   // Owner-oriented face geometry. Precondition: valid cell and side.
-  // Endpoints are ordered so that clockwise rotation of (b - a) is the
-  // outward normal. For the neighbor-oriented face, use
+  // Endpoints are ordered so that clockwise rotation of (b - a) points in
+  // the outward-normal direction. For the neighbor-oriented face, use
   // face(*neighbor, opposite(side)).
   Face face(Ind cell, Side side) const;
 
