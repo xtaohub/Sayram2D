@@ -233,10 +233,12 @@ alive for as long as the equation is used. An example is given in
 
 ```cpp
 BoundaryConditions bc;
-bc.set_dirichlet(Side::Q1Min, 0.5);
+std::vector<double> q2_max_values(mesh.n1() + 1, 0.5);
+
+bc.set_dirichlet(Side::Q1Min, 0.5);               // scalar
 bc.set_zero_flux(Side::Q1Max);
 bc.set_zero_flux(Side::Q2Min);
-bc.set_dirichlet(Side::Q2Max, 0.0);
+bc.set_dirichlet(Side::Q2Max, q2_max_values);     // vertex array
 bc.validate(mesh);  // optional explicit validation
 ```
 
