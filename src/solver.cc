@@ -291,9 +291,12 @@ void Solver::add_face_pair(const Face& face_k, const Face& face_l,
   const double a_sigma_l =
       alpha_one_sided(face_l, lambda_l, &alpha_la, &alpha_lb);
 
-  const double denominator =
-      std::abs(a_sigma_k) + std::abs(a_sigma_l) + 2.0 * kEps;
-  const double mu_k = (std::abs(a_sigma_l) + kEps) / denominator;
+  const double abs_k = std::abs(a_sigma_k);
+  const double abs_l = std::abs(a_sigma_l);
+  const double denominator = abs_k + abs_l;
+
+  // Equation (17): equal weights when both one-sided coefficients vanish.
+  const double mu_k = denominator == 0.0 ? 0.5 : abs_l / denominator;
   const double mu_l = 1.0 - mu_k;
 
   const double b_sigma = mu_l * a_sigma_l - mu_k * a_sigma_k;
