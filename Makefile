@@ -4,6 +4,8 @@
 #   make app      same
 #   make lib      build the static library (requires ar)
 #   make example1  build and run the time-independent paper problem
+#   make example1_row  build and run Example 1 with row-major std::vector storage
+#   make example1_col  build and run Example 1 with column-major std::vector storage
 #   make example2  build and run the time-dependent example
 #   make clean     remove temporary Make build files
 #   make distclean remove temporary files, the static library, and the app
@@ -20,13 +22,15 @@ HDF5_LIBS ?= -lhdf5
 
 CPPFLAGS := -Isrc/include -I$(EIGEN_INCLUDE)
 APP_CPPFLAGS := -Isrc/app -Isrc/examples/albert_young -I$(HDF5_INCLUDE)
-CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra -Wno-class-memaccess
+CXXFLAGS ?= -std=c++20 -O2 -DEIGEN_NO_DEBUG -Wall -Wextra
 HDF5_LDFLAGS := -L$(HDF5_LIBDIR)
 
 BUILD_DIR ?= build/sayram2d
 LIB := lib/libsayram2d.a
 APP_BIN := sayram2d
 EXAMPLE1_BIN := $(BUILD_DIR)/example1
+EXAMPLE1_ROW_BIN := $(BUILD_DIR)/example1_row
+EXAMPLE1_COL_BIN := $(BUILD_DIR)/example1_col
 EXAMPLE2_BIN := $(BUILD_DIR)/example2
 
 CORE_SRCS := src/mesh.cc src/boundary_conditions.cc src/solver.cc
@@ -37,7 +41,7 @@ HEADERS := $(wildcard src/include/*.h) $(wildcard src/app/*.h) \
            $(wildcard src/examples/albert_young/*.h)
 OBJS := $(patsubst src/%.cc,$(BUILD_DIR)/%.o,$(CORE_SRCS))
 
-.PHONY: all app lib example1 example2 clean distclean
+.PHONY: all app lib example1 example1_row example1_col example2 clean distclean
 
 all: app
 
@@ -65,6 +69,20 @@ $(EXAMPLE1_BIN): src/examples/example1.cc $(LIB)
 
 example1: $(EXAMPLE1_BIN)
 	$(EXAMPLE1_BIN)
+
+$(EXAMPLE1_ROW_BIN): src/examples/example1_row.cc $(LIB)
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
+
+example1_row: $(EXAMPLE1_ROW_BIN)
+	$(EXAMPLE1_ROW_BIN)
+
+$(EXAMPLE1_COL_BIN): src/examples/example1_col.cc $(LIB)
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB) -o $@
+
+example1_col: $(EXAMPLE1_COL_BIN)
+	$(EXAMPLE1_COL_BIN)
 
 $(EXAMPLE2_BIN): src/examples/example2.cc $(LIB)
 	@mkdir -p $(BUILD_DIR)
