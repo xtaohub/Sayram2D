@@ -111,6 +111,7 @@ passed directly instead of using `-L`/`-l`:
 |---|---|
 | `sayram2d::Mesh` | Owns `q1`/`q2` edges, centers, and widths. Provides cell centers/measures, vertex positions, face geometry, neighbors, and boundary queries. |
 | `sayram2d::Array2D<T>` | Owning, contiguous, column-major 2-D array. Provides indexing, sizing, fill, iteration, and `view()`. |
+| `sayram2d::ArrayView1D<T>` | Non-owning strided 1-D view. Used for boundary data that may be a slice of a 3D/4D host array. |
 | `sayram2d::ArrayView2D<T>` | Minimal non-owning strided 2-D view. Used by `Equation` and `Solver` and for slices of larger arrays. |
 | `sayram2d::BoundaryConditions` | Per-side `Dirichlet` or `ZeroFlux` configuration. Dirichlet data are specified at boundary vertices. |
 | `sayram2d::Equation` | Non-owning views of `G`, `D11`, `D12`, `D22`, optional inverse loss, and a non-owning reference to the caller-owned boundary configuration. |
@@ -417,6 +418,10 @@ bc.set_dirichlet(Side::Q2Max, q2_max_values);     // vertex array
 bc.validate(mesh);  // optional explicit validation
 ```
 
+Dirichlet values may also be supplied as an `ArrayView1D<const double>`. This
+allows a boundary line to be a strided slice of a 3D or 4D host array instead
+of a contiguous `std::vector`.
+
 - `ZeroFlux` is the default on all four sides.
 - Negative Dirichlet values are rejected; zero is allowed.
 - Dirichlet data are specified at boundary vertices:
@@ -492,9 +497,10 @@ These helpers are not used by `Equation` or `Solver`; callers still supply the
 - `Equation` holds non-owning coefficient views and a `const`
   `BoundaryConditions&`. The caller must keep the coefficient matrices and
   the boundary object alive for as long as the equation is used.
-- Coefficient values, boundary values, boundary types, and data spans may be
-  changed in place between solves. Construction from temporary coefficient
-  matrices or a temporary `BoundaryConditions` is rejected at compile time.
+- Coefficient values, boundary values, boundary types, and boundary view
+  descriptors may be changed in place between solves. Construction from
+  temporary coefficient matrices or a temporary `BoundaryConditions` is
+  rejected at compile time.
 - `Array2D` owns its storage; a view from `Array2D::view()` is valid only while
   that `Array2D` exists and has not been reallocated or reassigned.
 - `ArrayView2D` never allocates or copies.

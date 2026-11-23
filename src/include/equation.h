@@ -11,7 +11,7 @@ namespace sayram2d {
 // Cell-centered coefficient views plus a non-owning reference to the
 // caller-owned boundary configuration. The caller must keep the
 // BoundaryConditions object and the coefficient arrays alive for as long as
-// this Equation is used. Changes to the boundary descriptor, its spans, or its
+// this Equation is used. Changes to the boundary descriptor, its views, or its
 // values are visible to subsequent solves.
 class Equation {
  public:

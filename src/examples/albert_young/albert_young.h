@@ -12,7 +12,7 @@ namespace sayram2d::albert_young {
 double albert_young_initial(double alpha, double log_energy) noexcept;
 
 // Physical setup of the legacy Albert-Young case. The model owns the
-// Q2Min boundary values because BoundaryConditions stores a non-owning span.
+// Q2Min boundary values because BoundaryConditions stores a non-owning view.
 class AlbertYoungModel {
  public:
   explicit AlbertYoungModel(const Mesh& mesh);

@@ -49,7 +49,7 @@ void BoundaryConditions::set_dirichlet(Side side, double value) {
 }
 
 void BoundaryConditions::set_dirichlet(Side side,
-                                       std::span<const double> values) {
+                                       ArrayView1D<const double> values) {
   SideData& d = data(side);
   d.type = BCType::Dirichlet;
   d.constant = false;
@@ -59,7 +59,7 @@ void BoundaryConditions::set_dirichlet(Side side,
 
 void BoundaryConditions::set_dirichlet(Side side,
                                        const std::vector<double>& values) {
-  set_dirichlet(side, std::span<const double>(values.data(), values.size()));
+  set_dirichlet(side, make_view1d(values.data(), values.size()));
 }
 
 void BoundaryConditions::set_zero_flux(Side side) noexcept {
@@ -74,7 +74,7 @@ double BoundaryConditions::constant_value(Side side) const {
   return data(side).constant_value;
 }
 
-std::span<const double> BoundaryConditions::values(Side side) const noexcept {
+ArrayView1D<const double> BoundaryConditions::values(Side side) const noexcept {
   return data(side).values;
 }
 
@@ -82,7 +82,7 @@ double BoundaryConditions::value(Side side, std::size_t index) const {
   const SideData& d = data(side);
   if (d.constant) return d.constant_value;
   assert(index < d.values.size());
-  return d.values[index];
+  return d.values(index);
 }
 
 void BoundaryConditions::validate(const Mesh& mesh) const {
@@ -106,7 +106,7 @@ void BoundaryConditions::validate(const Mesh& mesh) const {
             "Dirichlet boundary data has the wrong length for this mesh");
       }
       for (std::size_t k = 0; k < d.values.size(); ++k) {
-        const double value = d.values[k];
+        const double value = d.values(k);
         if (!std::isfinite(value)) {
           throw std::invalid_argument("Dirichlet boundary value is not finite");
         }
@@ -130,8 +130,8 @@ void BoundaryConditions::validate(const Mesh& mesh) const {
       if (d1.type != BCType::Dirichlet || d2.type != BCType::Dirichlet) {
         continue;
       }
-      const double value1 = d1.constant ? d1.constant_value : d1.values[j];
-      const double value2 = d2.constant ? d2.constant_value : d2.values[i];
+      const double value1 = d1.constant ? d1.constant_value : d1.values(j);
+      const double value2 = d2.constant ? d2.constant_value : d2.values(i);
       if (!nearly_equal(value1, value2)) {
         throw std::invalid_argument(
             "inconsistent Dirichlet values at a mesh corner");
