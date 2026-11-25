@@ -458,7 +458,8 @@ constants and conversions:
 - `physics::pi`, `physics::speed_of_light`, `physics::electron_rest_energy_mev`;
 - degrees ↔ radians;
 - eV/keV/MeV ↔ joules;
-- kinetic energy ↔ momentum, with caller-supplied units and speed of light.
+- kinetic energy ↔ momentum, with caller-supplied units and speed of light;
+- `dloge_dp(log_e, rest_energy, speed_of_light)` for `d log(E)/dp`.
 
 The momentum/energy functions take the rest energy and speed of light as
 explicit parameters, so the same helpers work for other particles and unit
@@ -482,9 +483,9 @@ uses the latter convention.
 [`src/include/radiation_belt.h`](../src/include/radiation_belt.h) provides optional
 radiation-belt helpers for the `(alpha0, log E)` coordinates:
 
-- `dloge_dp(log_e, rest_energy, speed_of_light)`;
 - `G_alpha0_p(alpha0, p)`;
-- `G_alpha0_loge(alpha0, log_e, rest_energy, speed_of_light)`.
+- `G_alpha0_loge(alpha0, log_e, rest_energy, speed_of_light)`, which uses
+  `physics::dloge_dp`.
 
 These helpers are not used by `Equation` or `Solver`; callers still supply the
 `G` field.

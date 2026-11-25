@@ -56,4 +56,13 @@ inline double kinetic_energy(double momentum, double rest_energy,
   return std::sqrt(pc * pc + rest_energy * rest_energy) - rest_energy;
 }
 
+// d log(E) / dp = p c^2 / [E (E + E0)].
+inline double dloge_dp(double log_e, double rest_energy,
+                       double speed_of_light) noexcept {
+  const double energy = std::exp(log_e);
+  const double p = momentum(energy, rest_energy, speed_of_light);
+  return speed_of_light * speed_of_light * p /
+         (energy * (energy + rest_energy));
+}
+
 }  // namespace sayram2d::physics
